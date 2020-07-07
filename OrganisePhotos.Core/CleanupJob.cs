@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,11 +10,13 @@ namespace OrganisePhotos.Core
     public class CleanupJob
     {
         private readonly CleanupJobSettings m_Settings;
-        private DirectoryInfo RootFolder => m_Settings.RootFolderDir;
+
+        private readonly LocalFolder m_RootFolder;
         
-        private readonly List<DirectoryInfo> m_FoldersFound = new List<DirectoryInfo>();
-        private readonly List<FileInfo> m_FilesFound = new List<FileInfo>();
-        
+        private int m_FoldersProcessed;
+        private int m_FilesProcessed;
+        private long m_FilesSizeProcessed;
+
         private readonly CancellationToken m_CancellationToken;
 
         public event EventHandler<ProgressUpdateEventArgs> ProgressUpdate;
@@ -29,6 +30,8 @@ namespace OrganisePhotos.Core
             if (!m_Settings.Validate(out var errors))
                 throw new ArgumentException($"Invalid settings:\r\n{string.Join("\r\n", errors)}");
             
+            m_RootFolder = new LocalFolder(m_Settings.RootFolderDir, m_CancellationToken);
+
             /*
              * Cycle through all folders and files and:
              *
@@ -47,59 +50,61 @@ namespace OrganisePhotos.Core
         {
             await Task.Run(async () =>
                            {
-                               var result = await ProcessDirectory(RootFolder);
+                               OnProgress("Finding folders and files.");
+                               await m_RootFolder.Load(IsFolderIgnored, IsFileIgnored, () => OnProgress(null));
+
+                               OnProgress("Folders and files found. Starting processing.");
+                               var result = await ProcessDirectory(m_RootFolder);
+
+                               await ProcessDupes();
+
                                if (result == false)
                                    OnProgress("Run cancelled.");
-                           });
+
+                           }, m_CancellationToken);
         }
 
-        private async Task<bool> ProcessDirectory(DirectoryInfo dir)
+        private async Task<bool> ProcessDirectory(LocalFolder folder)
         {
             if (m_CancellationToken.IsCancellationRequested)
                 return false;
 
-            if (dir == RootFolder)
-            {
-                OnProgress($"Starting scan on root folder: {dir.FullName}");
-            }
-            else
-            {
-                if (IsFolderIgnored(dir))
-                    return true;
+            OnProgress($"Processing folder: {folder.Dir.FullName}");
 
-                DirFound(dir);
-            }
-
-            foreach (var file in dir.EnumerateFiles())
+            var x = 0;
+            foreach (var file in folder.Files)
+            {
                 if (!await ProcessFile(file))
                     return false;
 
-            foreach (var subDir in dir.EnumerateDirectories())
+                if (++x % 10 == 0)
+                    OnProgress(null);
+            }
+
+            foreach (var subDir in folder.Folders)
+            {
                 if (!await ProcessDirectory(subDir))
                     return false;
+            }
+
+            m_FoldersProcessed++;
+            OnProgress(null);
 
             return true;
         }
-        
-        private void DirFound(DirectoryInfo dir)
-        {
-            m_FoldersFound.Add(dir);
-            OnProgress($"Folder found: {dir.FullName}");
-        }
 
-        private async Task<bool> ProcessFile(FileInfo file)
+        private async Task<bool> ProcessFile(LocalFile file)
         {
             if (m_CancellationToken.IsCancellationRequested)
                 return false;
+            
+            var cleanupFile = new CleanupFile(file.File, m_Settings, OnProgress);
+            var result = await cleanupFile.ProcessFile();
 
-            m_FilesFound.Add(file);
-            OnProgress(null);
+            m_FilesProcessed++;
+            m_FilesSizeProcessed += file.File.Length;
 
-            if (IsFileIgnored(file))
-                return true;
-
-            var cleanupFile = new CleanupFile(file, m_Settings, OnProgress);
-            return await cleanupFile.ProcessFile();
+            return result;
         }
 
         private bool IsFolderIgnored(DirectoryInfo dir)
@@ -112,13 +117,29 @@ namespace OrganisePhotos.Core
             return string.Equals(file.Name, "thumbs.db", StringComparison.CurrentCultureIgnoreCase);
         }
 
+        private async Task ProcessDupes()
+        {
+            if (m_Settings.RenameDupeFiles == CleanupAction.Ignore)
+                return;
+
+            var dupeCleanup = new DupeCleanup(m_RootFolder);
+            var isDupes = await dupeCleanup.Check();
+
+            if (!isDupes)
+            {
+                OnProgress("No duplicate files detected");
+                return;
+            }
+
+            OnProgress($"Dupes detected: {dupeCleanup.ExactDupes.Count} Exact; {dupeCleanup.NameDupes.Count} By Name");
+            await dupeCleanup.SaveReport("dupes.txt");
+        }
+
         private void OnProgress(string message)
         {
-            // TODO: optimise this
-            var filesProcessed = m_FilesFound.Count;
-            var filesSizeProcessed = m_FilesFound.Sum(f => f.Length);
-            var foldersProcessed = m_FoldersFound.Count;
-            ProgressUpdate?.Invoke(this, new ProgressUpdateEventArgs(filesProcessed, filesSizeProcessed, foldersProcessed, message));
+            ProgressUpdate?.Invoke(this, new ProgressUpdateEventArgs(m_RootFolder.TotalFiles, m_RootFolder.TotalFileSize, m_RootFolder.TotalFolders, 
+                                                                     m_FilesProcessed, m_FilesSizeProcessed, m_FoldersProcessed,
+                                                                     message));
         }
     }
 }

@@ -33,6 +33,7 @@ namespace OrganisePhotos.App
             job.ProgressUpdate += JobOnProgressUpdate;
 
             btnStart.Enabled = grpSettings.Enabled = false;
+            lblFilesProcessed.Text = lblFileBytesProcessed.Text = lblFoldersProcessed.Text = "-";
             lblFilesFound.Text = lblFileBytesFound.Text = lblFoldersFound.Text = "-";
             listLog.Items.Clear();
             btnCancel.Enabled = true;
@@ -95,9 +96,13 @@ namespace OrganisePhotos.App
                                           listLog.SelectedIndex = -1;
                                       }
 
-                                      lblFilesFound.Text = e.FilesProcessed.ToString();
-                                      lblFileBytesFound.Text = e.FilesSizeProcessed.ToString();
-                                      lblFoldersFound.Text = e.FoldersProcessed.ToString();
+                                      lblFilesFound.Text = e.TotalFiles.ToString();
+                                      lblFileBytesFound.Text = e.TotalFileSize.ToString();
+                                      lblFoldersFound.Text = e.TotalFolders.ToString();
+
+                                      lblFilesProcessed.Text = e.FilesProcessed.ToString();
+                                      lblFileBytesProcessed.Text = e.FilesSizeProcessed.ToString();
+                                      lblFoldersProcessed.Text = e.FoldersProcessed.ToString();
                                   });
         }
 
