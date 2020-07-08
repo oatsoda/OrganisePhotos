@@ -222,8 +222,10 @@ namespace OrganisePhotos.Core
 
         private async Task SetDateTaken(string newRawValue)
         {
-            await using var fileStream = m_FileInfo.OpenRead();
-            using var image = await Image.LoadAsync(fileStream);
+            Image image;
+            using (var fileStream = m_FileInfo.OpenRead())
+                image = await Image.LoadAsync(fileStream);
+
             var exif = image.Metadata.ExifProfile;
             var rawValue = exif.GetValue(ExifTag.DateTime);
             rawValue.TrySetValue(newRawValue);
