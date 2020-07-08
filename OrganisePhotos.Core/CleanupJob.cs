@@ -122,6 +122,8 @@ namespace OrganisePhotos.Core
             if (m_Settings.RenameDupeFiles == CleanupAction.Ignore)
                 return;
 
+            // TODO: Run Dupe check before Processing all - DupeCleanup mark the LocalFiles and then it can rename as part of the rest of the cleanup
+
             var dupeCleanup = new DupeCleanup(m_RootFolder);
             var isDupes = await dupeCleanup.Check();
 
@@ -131,8 +133,16 @@ namespace OrganisePhotos.Core
                 return;
             }
 
-            OnProgress($"Dupes detected: {dupeCleanup.ExactDupes.Count} Exact; {dupeCleanup.NameDupes.Count} By Name");
-            await dupeCleanup.SaveReport("dupes.txt");
+            OnProgress($"Exact Dupes detected: {dupeCleanup.ExactDupes.Count} [Won't fix] Exact; {dupeCleanup.NameDupes.Count} By Name");
+            
+            foreach (var exactDupe in dupeCleanup.ExactDupes.OrderBy(d => d.File.Name))
+                OnProgress($"[Log] Exact dupe: {exactDupe.File.Name} in {exactDupe.File.Directory.FullName}");
+            
+            foreach (var nameDupe in dupeCleanup.NameDupes.OrderBy(d => d.File.Name))
+            {
+                if (!await new CleanupFile(nameDupe.File, m_Settings, OnProgress).FixDuplicateFileName())
+                    return;
+            }
         }
 
         private void OnProgress(string message)

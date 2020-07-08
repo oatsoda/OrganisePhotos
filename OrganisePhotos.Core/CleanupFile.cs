@@ -15,19 +15,36 @@ namespace OrganisePhotos.Core
         
         private bool m_ExitRequested;
 
+        private readonly bool m_IsImage;
+
         private string m_RawDateTaken;
         private DateTime? m_DateTaken;
         private bool m_DateTakenFixable;
+
+        // BUG: Not loading DateTaken if other options aren't set - e.g. only Dupes option is chosen
+        private string DupeRenameSuffix => (m_DateTaken ?? m_FileInfo.CreationTime).ToString("_yyyyMMdd_hhmmss");
+        private string DupeRenameFilename => $"{Path.GetFileNameWithoutExtension(m_FileInfo.Name)}{DupeRenameSuffix}{m_FileInfo.Extension}";
 
         public CleanupFile(FileInfo fileInfo, CleanupJobSettings settings, Action<string> progressAction)
         {
             m_FileInfo = fileInfo;
             m_Settings = settings;
             m_ProgressAction = progressAction;
+
+            m_IsImage = settings.ImageExtensions().Contains(m_FileInfo.Extension.ToLower());
+        }
+
+        public void RenameWithDateSuffix()
+        {
+            var destination = Path.Combine(m_FileInfo.Directory.FullName, DupeRenameFilename);
+            m_FileInfo.MoveTo(destination);
         }
 
         public async Task<bool> ProcessFile()
         {
+            if (!m_IsImage)
+                return true;
+
             await ReadExifRawDateTaken();
             ParseExifRawDateTaken();
             await FixIncorrectDateTakenFormat();
@@ -178,6 +195,29 @@ namespace OrganisePhotos.Core
             }
 
             // TODO set value
+        }
+
+        
+        public async Task<bool> FixDuplicateFileName()
+        {
+            if (m_Settings.RenameDupeFiles == CleanupAction.Ignore)
+                return true;
+
+            if (m_Settings.RenameDupeFiles == CleanupAction.Log)
+            {
+                m_ProgressAction($"[Log] Name dupe: {m_FileInfo.Name} in {m_FileInfo.Directory.FullName}");
+                return true;
+            }
+
+            if (m_Settings.RenameDupeFiles == CleanupAction.Prompt)
+            {
+                var result = Prompt($"Rename dupe file from '{m_FileInfo.Name}' to '{DupeRenameFilename}' for file {m_FileInfo.FullName}");
+                if (result != PromptResult.Fix)
+                    return true; 
+            }
+
+            RenameWithDateSuffix();
+            return true;
         }
 
         private async Task SetDateTaken(string newRawValue)

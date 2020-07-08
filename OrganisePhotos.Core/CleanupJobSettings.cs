@@ -33,5 +33,22 @@ namespace OrganisePhotos.Core
             errors = errorList;
             return !errorList.Any();
         }
+
+        private static readonly List<string> s_ImageExtensions = new List<string>
+                                                                 {
+                                                                     ".bmp",
+                                                                     ".gif",
+                                                                     ".heic",
+                                                                     ".ico",
+                                                                     ".jpg",
+                                                                     ".jpeg",
+                                                                     ".png",
+                                                                     ".tiff"
+                                                                 };
+
+        public List<string> ImageExtensions()
+        {
+            return s_ImageExtensions;
+        }
     }
 }
