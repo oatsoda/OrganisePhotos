@@ -1,43 +1,37 @@
 ﻿using System;
-using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 
 namespace OrganisePhotos.Core
 {
     public class CleanupFile
     {
-        private readonly FileInfo m_FileInfo;
+        private readonly LocalFile m_LocalFile;
+        private FileInfo FileInfo => m_LocalFile.File;
         private readonly CleanupJobSettings m_Settings;
         private readonly Action<string> m_ProgressAction;
         
         private bool m_ExitRequested;
 
         private readonly bool m_IsImage;
-
-        private string m_RawDateTaken;
-        private DateTime? m_DateTaken;
-        private bool m_DateTakenFixable;
-
+        
         // BUG: Not loading DateTaken if other options aren't set - e.g. only Dupes option is chosen
-        private string DupeRenameSuffix => (m_DateTaken ?? m_FileInfo.CreationTime).ToString("_yyyyMMdd_hhmmss");
-        private string DupeRenameFilename => $"{Path.GetFileNameWithoutExtension(m_FileInfo.Name)}{DupeRenameSuffix}{m_FileInfo.Extension}";
+        private string DupeRenameSuffix => (m_LocalFile.DateTaken ?? FileInfo.CreationTime).ToString("_yyyyMMdd_hhmmss");
+        private string DupeRenameFilename => $"{Path.GetFileNameWithoutExtension(FileInfo.Name)}{DupeRenameSuffix}{FileInfo.Extension}";
 
-        public CleanupFile(FileInfo fileInfo, CleanupJobSettings settings, Action<string> progressAction)
+        public CleanupFile(LocalFile fileInfo, CleanupJobSettings settings, Action<string> progressAction)
         {
-            m_FileInfo = fileInfo;
+            m_LocalFile = fileInfo;
             m_Settings = settings;
             m_ProgressAction = progressAction;
 
-            m_IsImage = settings.ImageExtensions().Contains(m_FileInfo.Extension.ToLower());
+            m_IsImage = settings.ImageExtensions().Contains(FileInfo.Extension.ToLower());
         }
 
         public void RenameWithDateSuffix()
         {
-            var destination = Path.Combine(m_FileInfo.Directory.FullName, DupeRenameFilename);
-            m_FileInfo.MoveTo(destination);
+            var destination = Path.Combine(FileInfo.Directory.FullName, DupeRenameFilename);
+            FileInfo.MoveTo(destination);
         }
 
         public async Task<bool> ProcessFile()
@@ -46,7 +40,6 @@ namespace OrganisePhotos.Core
                 return true;
 
             await ReadExifRawDateTaken();
-            ParseExifRawDateTaken();
             await FixIncorrectDateTakenFormat();
 
             if (m_ExitRequested)
@@ -70,78 +63,35 @@ namespace OrganisePhotos.Core
                 m_Settings.SetDateTakenFromCreatedDateIfNotSet == CleanupAction.Ignore)
                 return;
 
-            IExifValue<string> rawValue;
-            await using (var fs = m_FileInfo.OpenRead())
-            {
-                var info = await Image.IdentifyAsync(fs);
-                rawValue = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTime);
-            }
-
-            m_RawDateTaken = string.IsNullOrWhiteSpace(rawValue?.Value) 
-                                 ? null 
-                                 : rawValue.Value;
-        }
-
-        private void ParseExifRawDateTaken()
-        {
-            // Don't read it if we don't need it
-            if (m_Settings.FixIncorrectDateTakenFormat == CleanupAction.Ignore && 
-                m_Settings.ChangeCreatedDateToDateTaken == CleanupAction.Ignore &&
-                m_Settings.SetDateTakenFromCreatedDateIfNotSet == CleanupAction.Ignore)
-                return;
-
-            if (m_RawDateTaken == null)
-                return;
-
-            if (DateTime.TryParseExact(m_RawDateTaken, "yyyy:MM:dd HH:mm:ss", null, DateTimeStyles.None, out var dateTaken))
-            {
-                m_DateTaken = dateTaken;
-                return;
-            }
-
-            if (m_Settings.FixIncorrectDateTakenFormat == CleanupAction.Ignore)
-                return;
-
-            if (DateTime.TryParseExact(m_RawDateTaken, "yyyy:MM:dd:HH:mm:ss", null, DateTimeStyles.None, out var incorrectDateTaken))
-            {
-                m_DateTaken = incorrectDateTaken;
-                m_DateTakenFixable = true;
-                return;
-            }
-            // TODO: Other expected broken formats?
+            await m_LocalFile.LoadDateTaken();
             
             // If one of the fixes requiring Date Taken is ON then just log if encounter invalid format
-            m_ProgressAction($"[Log] Unrecognised Date Taken '{m_RawDateTaken}' for file {m_FileInfo.FullName}");
+            if (!m_LocalFile.DateTakenValid)
+                m_ProgressAction($"[Log] Unrecognised Date Taken '{m_LocalFile.DateTakenRaw}' for file {FileInfo.FullName}");
         }
-
+        
         private async Task FixIncorrectDateTakenFormat()
         {
             if (m_Settings.FixIncorrectDateTakenFormat == CleanupAction.Ignore)
                 return;
 
-            if (!m_DateTakenFixable)
+            if (!m_LocalFile.DateTakenFixable)
                 return;
-
-            var newValue = m_DateTaken.Value.ToString("yyyy:MM:dd HH:mm:ss");
 
             if (m_Settings.FixIncorrectDateTakenFormat == CleanupAction.Log)
             {
-                m_ProgressAction($"[Log] Could fix Date Taken '{m_RawDateTaken}' with '{newValue}' for file {m_FileInfo.FullName}");
+                m_ProgressAction($"[Log] Could fix Date Taken '{m_LocalFile.DateTakenRaw}' with '{m_LocalFile.DateTakenCorrectRaw}' for file {FileInfo.FullName}");
                 return;
             }
 
             if (m_Settings.FixIncorrectDateTakenFormat == CleanupAction.Prompt)
             {
-                var result = Prompt($"Replace Date Taken '{m_RawDateTaken}' with '{newValue}' for file {m_FileInfo.FullName}");
+                var result = Prompt($"Replace Date Taken '{m_LocalFile.DateTakenRaw}' with '{m_LocalFile.DateTakenCorrectRaw}' for file {FileInfo.FullName}");
                 if (result != PromptResult.Fix)
                     return;
             }
-
-            await SetDateTaken(newValue);
-            m_RawDateTaken = newValue;
-            m_DateTakenFixable = false;
             
-            m_ProgressAction($"Fixed Date Taken on {m_FileInfo.FullName}");
+            m_ProgressAction($"Fixed Date Taken on {FileInfo.FullName}");
         }
         
         private async Task FixMissingDateTaken()
@@ -149,20 +99,20 @@ namespace OrganisePhotos.Core
             if (m_Settings.SetDateTakenFromCreatedDateIfNotSet == CleanupAction.Ignore)
                 return;
             
-            if (m_DateTaken.HasValue)
+            if (m_LocalFile.DateTakenValid || m_LocalFile.DateTaken.HasValue)
                 return;
 
-            var createdDate = m_FileInfo.CreationTime.ToString("yyyy:MM:dd HH:mm:ss");
+            var createdDate = FileInfo.CreationTime.ToString("yyyy:MM:dd HH:mm:ss");
 
             if (m_Settings.SetDateTakenFromCreatedDateIfNotSet == CleanupAction.Log)
             {
-                m_ProgressAction($"[Log] Could set missing Date Taken to Created Date '{createdDate}' for file {m_FileInfo.FullName}");
+                m_ProgressAction($"[Log] Could set missing Date Taken to Created Date '{createdDate}' for file {FileInfo.FullName}");
                 return;
             }
 
             if (m_Settings.SetDateTakenFromCreatedDateIfNotSet == CleanupAction.Prompt)
             {
-                var result = Prompt($"Set missing Date Taken to Created Date '{createdDate}' for file {m_FileInfo.FullName}");
+                var result = Prompt($"Set missing Date Taken to Created Date '{createdDate}' for file {FileInfo.FullName}");
                 if (result != PromptResult.Fix)
                     return;
             }
@@ -175,21 +125,21 @@ namespace OrganisePhotos.Core
             if (m_Settings.ChangeCreatedDateToDateTaken == CleanupAction.Ignore)
                 return;
 
-            if (!m_DateTaken.HasValue)
+            if (!m_LocalFile.DateTaken.HasValue)
                 return;
             
-            var createdDate = m_FileInfo.CreationTime.ToString("O");
-            var dateTaken = m_DateTaken.Value.ToString("O");
+            var createdDate = FileInfo.CreationTime.ToString("O");
+            var dateTaken = m_LocalFile.DateTaken.Value.ToString("O");
 
             if (m_Settings.ChangeCreatedDateToDateTaken == CleanupAction.Log)
             {
-                m_ProgressAction($"[Log] Could change Created Date from '{createdDate}' to Date Taken to '{dateTaken}' for file {m_FileInfo.FullName}");
+                m_ProgressAction($"[Log] Could change Created Date from '{createdDate}' to Date Taken to '{dateTaken}' for file {FileInfo.FullName}");
                 return;
             }
 
             if (m_Settings.SetDateTakenFromCreatedDateIfNotSet == CleanupAction.Prompt)
             {
-                var result = Prompt($"Change Created Date from '{createdDate}' to Date Taken to '{dateTaken}' for file {m_FileInfo.FullName}");
+                var result = Prompt($"Change Created Date from '{createdDate}' to Date Taken to '{dateTaken}' for file {FileInfo.FullName}");
                 if (result != PromptResult.Fix)
                     return;
             }
@@ -205,13 +155,13 @@ namespace OrganisePhotos.Core
 
             if (m_Settings.RenameDupeFiles == CleanupAction.Log)
             {
-                m_ProgressAction($"[Log] Name dupe: {m_FileInfo.Name} in {m_FileInfo.Directory.FullName}");
+                m_ProgressAction($"[Log] Name dupe: {FileInfo.Name} in {FileInfo.Directory.FullName}");
                 return true;
             }
 
             if (m_Settings.RenameDupeFiles == CleanupAction.Prompt)
             {
-                var result = Prompt($"Rename dupe file from '{m_FileInfo.Name}' to '{DupeRenameFilename}' for file {m_FileInfo.FullName}");
+                var result = Prompt($"Rename dupe file from '{FileInfo.Name}' to '{DupeRenameFilename}' for file {FileInfo.FullName}");
                 if (result != PromptResult.Fix)
                     return true; 
             }
@@ -219,19 +169,7 @@ namespace OrganisePhotos.Core
             RenameWithDateSuffix();
             return true;
         }
-
-        private async Task SetDateTaken(string newRawValue)
-        {
-            Image image;
-            using (var fileStream = m_FileInfo.OpenRead())
-                image = await Image.LoadAsync(fileStream);
-
-            var exif = image.Metadata.ExifProfile;
-            var rawValue = exif.GetValue(ExifTag.DateTime);
-            rawValue.TrySetValue(newRawValue);
-            await image.SaveAsync(m_FileInfo.FullName);
-        }
-
+        
         private PromptResult Prompt(string message)
         {
             var result = m_Settings.Prompt(message);

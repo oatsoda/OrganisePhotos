@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,8 +10,8 @@ namespace OrganisePhotos.Core
     {
         private readonly CleanupJobSettings m_Settings;
 
-        private readonly LocalFolder m_RootFolder;
-        
+        private bool m_FinishedScan;
+
         private int m_FoldersProcessed;
         private int m_FilesProcessed;
         private long m_FilesSizeProcessed;
@@ -21,6 +20,7 @@ namespace OrganisePhotos.Core
 
         public event EventHandler<ProgressUpdateEventArgs> ProgressUpdate;
 
+        public LocalFolder RootFolder { get; }
 
         public CleanupJob(CleanupJobSettings settings, CancellationToken cancellationToken)
         {
@@ -30,7 +30,7 @@ namespace OrganisePhotos.Core
             if (!m_Settings.Validate(out var errors))
                 throw new ArgumentException($"Invalid settings:\r\n{string.Join("\r\n", errors)}");
             
-            m_RootFolder = new LocalFolder(m_Settings.RootFolderDir, m_CancellationToken);
+            RootFolder = new LocalFolder(m_Settings.RootFolderDir, m_CancellationToken);
 
             /*
              * Cycle through all folders and files and:
@@ -51,10 +51,11 @@ namespace OrganisePhotos.Core
             await Task.Run(async () =>
                            {
                                OnProgress("Finding folders and files.");
-                               await m_RootFolder.Load(IsFolderIgnored, IsFileIgnored, () => OnProgress(null));
+                               await RootFolder.Load(IsFolderIgnored, IsFileIgnored, m_Settings, () => OnProgress(null));
+                               m_FinishedScan = true;
 
                                OnProgress("Folders and files found. Starting processing.");
-                               var result = await ProcessDirectory(m_RootFolder);
+                               var result = await ProcessDirectory(RootFolder);
 
                                await ProcessDupes();
 
@@ -98,7 +99,7 @@ namespace OrganisePhotos.Core
             if (m_CancellationToken.IsCancellationRequested)
                 return false;
             
-            var cleanupFile = new CleanupFile(file.File, m_Settings, OnProgress);
+            var cleanupFile = new CleanupFile(file, m_Settings, OnProgress);
             var result = await cleanupFile.ProcessFile();
 
             m_FilesProcessed++;
@@ -124,7 +125,7 @@ namespace OrganisePhotos.Core
 
             // TODO: Run Dupe check before Processing all - DupeCleanup mark the LocalFiles and then it can rename as part of the rest of the cleanup
 
-            var dupeCleanup = new DupeCleanup(m_RootFolder);
+            var dupeCleanup = new DupeCleanup(RootFolder);
             var isDupes = await dupeCleanup.Check();
 
             if (!isDupes)
@@ -140,14 +141,16 @@ namespace OrganisePhotos.Core
             
             foreach (var nameDupe in dupeCleanup.NameDupes.OrderBy(d => d.File.Name))
             {
-                if (!await new CleanupFile(nameDupe.File, m_Settings, OnProgress).FixDuplicateFileName())
+                // BUG: DateTaken might not be loaded
+                if (!await new CleanupFile(nameDupe, m_Settings, OnProgress).FixDuplicateFileName())
                     return;
             }
         }
 
         private void OnProgress(string message)
         {
-            ProgressUpdate?.Invoke(this, new ProgressUpdateEventArgs(m_RootFolder.TotalFiles, m_RootFolder.TotalFileSize, m_RootFolder.TotalFolders, 
+            ProgressUpdate?.Invoke(this, new ProgressUpdateEventArgs(RootFolder.TotalFiles, RootFolder.TotalFileSize, RootFolder.TotalFolders, 
+                                                                     m_FinishedScan,
                                                                      m_FilesProcessed, m_FilesSizeProcessed, m_FoldersProcessed,
                                                                      message));
         }

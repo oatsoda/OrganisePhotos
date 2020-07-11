@@ -20,6 +20,7 @@ namespace OrganisePhotos.Core
 
         public bool Validate(out IEnumerable<string> errors)
         {
+            RootFolderPath = RootFolderPath.TrimEnd('\\', '/');
             RootFolderDir = new DirectoryInfo(RootFolderPath);
 
             var errorList = new List<string>(2);

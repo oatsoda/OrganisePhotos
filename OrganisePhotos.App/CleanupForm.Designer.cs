@@ -59,8 +59,16 @@
             this.lblFoldersFound = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
+            this.treeFolders = new System.Windows.Forms.TreeView();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
             this.grpSettings.SuspendLayout();
             this.grpStats.SuspendLayout();
+            this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnStart
@@ -209,15 +217,15 @@
             // 
             // listLog
             // 
-            this.listLog.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.listLog.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.listLog.FormattingEnabled = true;
+            this.listLog.HorizontalScrollbar = true;
             this.listLog.ItemHeight = 15;
-            this.listLog.Location = new System.Drawing.Point(429, 12);
+            this.listLog.Location = new System.Drawing.Point(12, 665);
             this.listLog.Name = "listLog";
             this.listLog.ScrollAlwaysVisible = true;
-            this.listLog.Size = new System.Drawing.Size(559, 604);
+            this.listLog.Size = new System.Drawing.Size(1108, 259);
             this.listLog.TabIndex = 3;
             // 
             // label3
@@ -287,6 +295,8 @@
             // 
             // grpStats
             // 
+            this.grpStats.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.grpStats.Controls.Add(this.lblFilesFound);
             this.grpStats.Controls.Add(this.lblFileBytesFound);
             this.grpStats.Controls.Add(this.label13);
@@ -301,7 +311,7 @@
             this.grpStats.Controls.Add(this.lblFilesProcessed);
             this.grpStats.Location = new System.Drawing.Point(12, 337);
             this.grpStats.Name = "grpStats";
-            this.grpStats.Size = new System.Drawing.Size(401, 279);
+            this.grpStats.Size = new System.Drawing.Size(401, 312);
             this.grpStats.TabIndex = 6;
             this.grpStats.TabStop = false;
             this.grpStats.Text = "Run Statistics";
@@ -360,11 +370,71 @@
             this.label10.TabIndex = 4;
             this.label10.Text = "Files Found";
             // 
+            // treeFolders
+            // 
+            this.treeFolders.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.treeFolders.ContextMenuStrip = this.contextMenuStrip1;
+            this.treeFolders.Location = new System.Drawing.Point(432, 11);
+            this.treeFolders.Name = "treeFolders";
+            this.treeFolders.Size = new System.Drawing.Size(688, 641);
+            this.treeFolders.TabIndex = 7;
+            this.treeFolders.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeFolders_NodeMouseClick);
+            // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem1,
+            this.toolStripMenuItem2,
+            this.toolStripMenuItem3,
+            this.toolStripMenuItem4,
+            this.toolStripMenuItem5});
+            this.contextMenuStrip1.Name = "contextMenuTreeFolders";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(279, 114);
+            this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
+            // 
+            // toolStripMenuItem1
+            // 
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(278, 22);
+            this.toolStripMenuItem1.Text = "Load Date Taken";
+            this.toolStripMenuItem1.Click += new System.EventHandler(this.menuLoadDateTaken_Click);
+            // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(278, 22);
+            this.toolStripMenuItem2.Text = "Fix Invalid DateTaken";
+            this.toolStripMenuItem2.Click += new System.EventHandler(this.menuFixes_Click);
+            // 
+            // toolStripMenuItem3
+            // 
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(278, 22);
+            this.toolStripMenuItem3.Text = "Set missing Date Taken from Last Write";
+            this.toolStripMenuItem3.Click += new System.EventHandler(this.menuFixes_Click);
+            // 
+            // toolStripMenuItem4
+            // 
+            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(278, 22);
+            this.toolStripMenuItem4.Text = "Set Created / Last Write to Date Taken";
+            this.toolStripMenuItem4.Click += new System.EventHandler(this.menuFixes_Click);
+            // 
+            // toolStripMenuItem5
+            // 
+            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(278, 22);
+            this.toolStripMenuItem5.Text = "Set Date Taken Manually";
+            this.toolStripMenuItem5.Click += new System.EventHandler(this.menuFixes_Click);
+            // 
             // CleanupForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(999, 637);
+            this.ClientSize = new System.Drawing.Size(1132, 934);
+            this.Controls.Add(this.treeFolders);
             this.Controls.Add(this.grpStats);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.listLog);
@@ -376,6 +446,7 @@
             this.grpSettings.PerformLayout();
             this.grpStats.ResumeLayout(false);
             this.grpStats.PerformLayout();
+            this.contextMenuStrip1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -412,6 +483,13 @@
         private System.Windows.Forms.Label lblFoldersFound;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TreeView treeFolders;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem3;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem4;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem5;
     }
 }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,7 +26,7 @@ namespace OrganisePhotos.Core
             m_CancellationToken = cancellationToken;
         }
 
-        public async Task Load(Func<DirectoryInfo, bool> isIgnoredDir, Func<FileInfo, bool> isIgnoredFile, Action onProgress)
+        public async Task Load(Func<DirectoryInfo, bool> isIgnoredDir, Func<FileInfo, bool> isIgnoredFile, CleanupJobSettings settings, Action onProgress)
         {
             TotalFolders = 1; // This folder
 
@@ -40,7 +41,7 @@ namespace OrganisePhotos.Core
                                    if (isIgnoredFile(file))
                                        continue;
                                    
-                                   files.Add(new LocalFile(file));
+                                   files.Add(new LocalFile(file, settings));
 
                                    TotalFiles++;
                                    TotalFileSize += file.Length;
@@ -55,7 +56,7 @@ namespace OrganisePhotos.Core
 
                                var folders = new List<LocalFolder>();
 
-                               foreach (var dir in Dir.EnumerateDirectories())
+                               foreach (var dir in Dir.EnumerateDirectories().OrderBy(d => d.Name))
                                {
                                    if (m_CancellationToken.IsCancellationRequested)
                                        return;
@@ -65,7 +66,7 @@ namespace OrganisePhotos.Core
 
                                    var folder = new LocalFolder(dir, m_CancellationToken);
                                    folders.Add(folder);
-                                   await folder.Load(isIgnoredDir, isIgnoredFile, onProgress);
+                                   await folder.Load(isIgnoredDir, isIgnoredFile, settings, onProgress);
 
                                    TotalFiles += folder.TotalFiles;
                                    TotalFileSize += folder.TotalFileSize;
