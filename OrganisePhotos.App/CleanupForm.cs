@@ -139,6 +139,23 @@ namespace OrganisePhotos.App
             {
                 RunUpdate(FixFileDateTaken, node);
             }
+            else if (sender == MenuSetFileDatesToDateTaken)
+            {
+                RunUpdate(SetFileDatesFromDateTaken, node);
+            }
+            else if (sender == MenuSetMissingDateTaken)
+            {
+                RunUpdate(SetDateTakenFromLastWrite, node);
+            }
+            else if (sender == MenuSetDateTakenManually)
+            {
+                var dateInput = new DateInputForm();
+                var result = dateInput.ShowDialog(this);
+                if (result != DialogResult.OK)
+                    return;
+
+                RunUpdate(n => SetFileDateTaken(n, dateInput.SelectedValue), node);
+            }
         }
 
         private void treeFolders_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -152,6 +169,8 @@ namespace OrganisePhotos.App
             var rootNode = treeFolders.Nodes[0];
             if (treeFolders.SelectedNode == rootNode && rootNode.Nodes.Cast<TreeNode>().Any(n => n.Tag is LocalFolder))
                 e.Cancel = true;
+
+            // TODO: Menu item disabling based on data?
         }
 
 
@@ -238,6 +257,31 @@ namespace OrganisePhotos.App
                 return;
 
             await localFile.FixInvalidDateTaken();
+            UpdateFileNodeText(node, localFile);
+        }
+        
+        private async Task SetFileDateTaken(TreeNode node, DateTime value)
+        {
+            if (!(node.Tag is LocalFile localFile))
+                return;
+
+            await localFile.SetDateTakenManually(value);
+            UpdateFileNodeText(node, localFile);
+        }
+        
+        private async Task SetFileDatesFromDateTaken(TreeNode node)
+        {
+            if (!(node.Tag is LocalFile localFile))
+                return;
+            await localFile.SetFileDatesFromDateTaken();
+            UpdateFileNodeText(node, localFile);
+        }
+        
+        private async Task SetDateTakenFromLastWrite(TreeNode node)
+        {
+            if (!(node.Tag is LocalFile localFile))
+                return;
+            await localFile.SetMissingDateTakenFromLastWrite();
             UpdateFileNodeText(node, localFile);
         }
         

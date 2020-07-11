@@ -68,18 +68,63 @@ namespace OrganisePhotos.Core
 
             var correctValue = DateTakenCorrectRaw;
 
+            await UpdateDateTaken(correctValue);
+
+            DateTakenRaw = correctValue;
+            DateTakenValid = true;
+            DateTakenFixable = false;
+        }
+        
+        public async Task SetDateTakenManually(DateTime value)
+        {
+            var rawValue = value.ToString("yyyy:MM:dd HH:mm:ss");
+            await UpdateDateTaken(rawValue);
+
+            DateTakenLoaded = true;
+            DateTakenRaw = rawValue;
+            DateTakenValid = true;
+            DateTakenFixable = false;
+            DateTaken = value;
+        }
+
+        public async Task SetFileDatesFromDateTaken()
+        {
+            if (!DateTakenLoaded || !DateTakenValid || !DateTaken.HasValue)
+                return;
+
+            await Task.Run(() =>
+                     {
+                         File.LastWriteTime = DateTaken.Value;
+                         File.CreationTime = DateTaken.Value;
+                     });
+        }
+        
+        public async Task SetMissingDateTakenFromLastWrite()
+        {
+            if (!DateTakenLoaded || DateTaken.HasValue)
+                return;
+
+            var lastWrite = File.LastWriteTime;
+            var rawValue = lastWrite.ToString("yyyy:MM:dd HH:mm:ss");
+            await UpdateDateTaken(rawValue);
+
+            DateTakenLoaded = true;
+            DateTakenRaw = rawValue;
+            DateTakenValid = true;
+            DateTakenFixable = false;
+            DateTaken = lastWrite;
+        }
+        
+        private async Task UpdateDateTaken(string dateValue)
+        {
             Image image;
             await using (var fileStream = File.OpenRead())
                 image = await Image.LoadAsync(fileStream);
 
             var exif = image.Metadata.ExifProfile;
             var rawValue = exif.GetValue(ExifTag.DateTime);
-            rawValue.TrySetValue(correctValue);
+            rawValue.TrySetValue(dateValue);
             await image.SaveAsync(File.FullName);
-
-            DateTakenRaw = correctValue;
-            DateTakenValid = true;
-            DateTakenFixable = false;
         }
     }
 }
