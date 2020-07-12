@@ -19,12 +19,12 @@ namespace OrganisePhotos.Core
 
         public LocalFolder RootFolder { get; }
 
-        public CleanupJob(LocalFolder rootFolder, CancellationToken cancellationToken)
+        public CleanupJob(LocalFolder rootFolder, CleanupJobSettings settings, CancellationToken cancellationToken)
         {
             if (!rootFolder.IsRootFolder)
                 throw new ArgumentException("Folder must be Root Folder", nameof(rootFolder));
 
-            m_Settings = rootFolder.Settings;
+            m_Settings = settings;
             m_CancellationToken = cancellationToken;
 
             RootFolder = rootFolder;
@@ -40,7 +40,6 @@ namespace OrganisePhotos.Core
              * - Detect files with invalid format of Date Taken: yyyy:MM:dd:HH:mm:ss
              * - Update file Create Date from Date Taken             *
              */
-
         }
 
         public async Task Run()
@@ -100,8 +99,6 @@ namespace OrganisePhotos.Core
 
             return result;
         }
-
-
 
         private async Task ProcessDupes()
         {

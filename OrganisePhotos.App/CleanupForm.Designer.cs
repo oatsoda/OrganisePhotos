@@ -68,6 +68,8 @@
             this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
             this.grpAutoCleanupSettings = new System.Windows.Forms.GroupBox();
             this.grpAutoCleanupProgress = new System.Windows.Forms.GroupBox();
+            this.btnProcess = new System.Windows.Forms.Button();
+            this.btnCancelProcess = new System.Windows.Forms.Button();
             this.grpSource.SuspendLayout();
             this.grpLoadedTotals.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -83,7 +85,7 @@
             this.btnLoad.TabIndex = 0;
             this.btnLoad.Text = "Load";
             this.btnLoad.UseVisualStyleBackColor = true;
-            this.btnLoad.Click += new System.EventHandler(this.btnStart_Click);
+            this.btnLoad.Click += new System.EventHandler(this.btnLoad_Click);
             // 
             // txtFolderPath
             // 
@@ -218,10 +220,10 @@
             this.listLog.FormattingEnabled = true;
             this.listLog.HorizontalScrollbar = true;
             this.listLog.ItemHeight = 15;
-            this.listLog.Location = new System.Drawing.Point(12, 612);
+            this.listLog.Location = new System.Drawing.Point(432, 642);
             this.listLog.Name = "listLog";
             this.listLog.ScrollAlwaysVisible = true;
-            this.listLog.Size = new System.Drawing.Size(1108, 259);
+            this.listLog.Size = new System.Drawing.Size(688, 229);
             this.listLog.TabIndex = 3;
             // 
             // label3
@@ -366,7 +368,7 @@
             this.treeFolders.ContextMenuStrip = this.contextMenuStrip1;
             this.treeFolders.Location = new System.Drawing.Point(432, 11);
             this.treeFolders.Name = "treeFolders";
-            this.treeFolders.Size = new System.Drawing.Size(688, 588);
+            this.treeFolders.Size = new System.Drawing.Size(688, 617);
             this.treeFolders.TabIndex = 7;
             this.treeFolders.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeFolders_NodeMouseClick);
             // 
@@ -446,18 +448,42 @@
             this.grpAutoCleanupProgress.Controls.Add(this.lblFoldersProcessed);
             this.grpAutoCleanupProgress.Controls.Add(this.label4);
             this.grpAutoCleanupProgress.Enabled = false;
-            this.grpAutoCleanupProgress.Location = new System.Drawing.Point(12, 488);
+            this.grpAutoCleanupProgress.Location = new System.Drawing.Point(12, 517);
             this.grpAutoCleanupProgress.Name = "grpAutoCleanupProgress";
-            this.grpAutoCleanupProgress.Size = new System.Drawing.Size(401, 111);
+            this.grpAutoCleanupProgress.Size = new System.Drawing.Size(401, 352);
             this.grpAutoCleanupProgress.TabIndex = 9;
             this.grpAutoCleanupProgress.TabStop = false;
             this.grpAutoCleanupProgress.Text = "Cleanup Progress";
+            // 
+            // btnProcess
+            // 
+            this.btnProcess.Enabled = false;
+            this.btnProcess.Location = new System.Drawing.Point(338, 488);
+            this.btnProcess.Name = "btnProcess";
+            this.btnProcess.Size = new System.Drawing.Size(75, 23);
+            this.btnProcess.TabIndex = 0;
+            this.btnProcess.Text = "Process";
+            this.btnProcess.UseVisualStyleBackColor = true;
+            this.btnProcess.Click += new System.EventHandler(this.btnProcess_Click);
+            // 
+            // btnCancelProcess
+            // 
+            this.btnCancelProcess.Enabled = false;
+            this.btnCancelProcess.Location = new System.Drawing.Point(256, 488);
+            this.btnCancelProcess.Name = "btnCancelProcess";
+            this.btnCancelProcess.Size = new System.Drawing.Size(75, 23);
+            this.btnCancelProcess.TabIndex = 5;
+            this.btnCancelProcess.Text = "Cancel";
+            this.btnCancelProcess.UseVisualStyleBackColor = true;
+            this.btnCancelProcess.Click += new System.EventHandler(this.btnCancelProcess_Click);
             // 
             // CleanupForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1132, 881);
+            this.Controls.Add(this.btnCancelProcess);
+            this.Controls.Add(this.btnProcess);
             this.Controls.Add(this.grpAutoCleanupProgress);
             this.Controls.Add(this.grpAutoCleanupSettings);
             this.Controls.Add(this.treeFolders);
@@ -522,6 +548,8 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem5;
         private System.Windows.Forms.GroupBox grpAutoCleanupSettings;
         private System.Windows.Forms.GroupBox grpAutoCleanupProgress;
+        private System.Windows.Forms.Button btnProcess;
+        private System.Windows.Forms.Button btnCancelProcess;
     }
 }
 

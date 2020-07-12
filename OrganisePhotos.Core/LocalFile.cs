@@ -23,7 +23,7 @@ namespace OrganisePhotos.Core
 
         public event EventHandler FileUpdated;
 
-        public LocalFile(FileInfo file, CleanupJobSettings settings)
+        public LocalFile(FileInfo file, LoadSettings settings)
         {
             File = file;
             IsImage = settings.ImageExtensions().Contains(File.Extension.ToLower());

@@ -13,7 +13,7 @@ namespace OrganisePhotos.Core
 
         internal bool IsRootFolder { get; }
 
-        public CleanupJobSettings Settings { get; }
+        public LoadSettings Settings { get; }
         public DirectoryInfo Dir { get; }
 
         public List<LocalFile> Files { get; private set; }
@@ -25,7 +25,7 @@ namespace OrganisePhotos.Core
 
         public event EventHandler<LoadProgressEventArgs> LoadProgress;
         
-        public LocalFolder(CleanupJobSettings settings)
+        public LocalFolder(LoadSettings settings)
         {
             if (!settings.Validate(out var errors))
                 throw new ArgumentException($"Invalid settings:\r\n{string.Join("\r\n", errors)}");
@@ -35,7 +35,7 @@ namespace OrganisePhotos.Core
             Dir = Settings.RootFolderDir;
         }
 
-        internal LocalFolder(DirectoryInfo dir, CleanupJobSettings settings)
+        internal LocalFolder(DirectoryInfo dir, LoadSettings settings)
         {
             Dir = dir;
             IsRootFolder = false;
@@ -48,59 +48,53 @@ namespace OrganisePhotos.Core
 
             try
             {
-
-
-            await Task.Run(() =>
-                           {
-                               var files = new List<LocalFile>();
-                               foreach (var file in Dir.EnumerateFiles())
+                await Task.Run(() =>
                                {
-                                   if (cancellationToken.IsCancellationRequested)
-                                       return;
+                                   var files = new List<LocalFile>();
+                                   foreach (var file in Dir.EnumerateFiles())
+                                   {
+                                       if (cancellationToken.IsCancellationRequested)
+                                           return;
 
-                                   if (Settings.IsFileIgnored(file))
-                                       continue;
-                                   
-                                   files.Add(new LocalFile(file, Settings));
+                                       if (Settings.IsFileIgnored(file))
+                                           continue;
 
-                                   TotalFiles++;
-                                   TotalFileSize += file.Length;
+                                       files.Add(new LocalFile(file, Settings));
 
-                                   if (files.Count % 10 == 0)
+                                       TotalFiles++;
+                                       TotalFileSize += file.Length;
+
+                                       if (files.Count % 10 == 0)
+                                           OnLoadProgress();
+                                   }
+
+                                   Files = files;
+                               }, cancellationToken);
+
+                await Task.Run(async () =>
+                               {
+                                   var folders = new List<LocalFolder>();
+
+                                   foreach (var dir in Dir.EnumerateDirectories().OrderBy(d => d.Name))
+                                   {
+                                       if (cancellationToken.IsCancellationRequested)
+                                           return;
+
+                                       if (Settings.IsFolderIgnored(dir))
+                                           continue;
+
+                                       var folder = new LocalFolder(dir, Settings);
+                                       folders.Add(folder);
+                                       await folder.Load(cancellationToken);
+
+                                       TotalFiles += folder.TotalFiles;
+                                       TotalFileSize += folder.TotalFileSize;
+                                       TotalFolders += folder.TotalFolders;
                                        OnLoadProgress();
-                               }
+                                   }
 
-                               Files = files;
-
-                           }, cancellationToken);
-
-            await Task.Run(async () =>
-                           {
-
-                               var folders = new List<LocalFolder>();
-
-                               foreach (var dir in Dir.EnumerateDirectories().OrderBy(d => d.Name))
-                               {
-                                   if (cancellationToken.IsCancellationRequested)
-                                       return;
-
-                                   if (Settings.IsFolderIgnored(dir))
-                                       continue;
-
-                                   var folder = new LocalFolder(dir, Settings);
-                                   folders.Add(folder);
-                                   await folder.Load(cancellationToken);
-
-                                   TotalFiles += folder.TotalFiles;
-                                   TotalFileSize += folder.TotalFileSize;
-                                   TotalFolders += folder.TotalFolders;
-                                   OnLoadProgress();
-                               }
-
-                               Folders = folders;
-
-                           }, cancellationToken);
-                
+                                   Folders = folders;
+                               }, cancellationToken);
             }
             catch (TaskCanceledException)
             {
