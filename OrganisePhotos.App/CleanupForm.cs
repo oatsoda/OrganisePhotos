@@ -1,5 +1,6 @@
 ﻿using OrganisePhotos.Core;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
@@ -20,6 +21,8 @@ namespace OrganisePhotos.App
         private ToolStripMenuItem MenuSetFileDatesToDateTaken => toolStripMenuItem4;
         private ToolStripMenuItem MenuSetDateTakenManually => toolStripMenuItem5;
 
+        private readonly Dictionary<LocalFile, TreeNode> m_FileNodes = new Dictionary<LocalFile, TreeNode>();
+
         public CleanupForm()
         {
             m_CleanupJobSettings = new CleanupJobSettings
@@ -37,26 +40,32 @@ namespace OrganisePhotos.App
         {
             m_CancelSource = new CancellationTokenSource();
             
-            var job = new CleanupJob(m_CleanupJobSettings, m_CancelSource.Token);
-            job.ProgressUpdate += JobOnProgressUpdate;
+            var job = new LocalFolder(m_CleanupJobSettings); 
+            job.LoadProgress += JobOnLoadProgress;
 
-            btnStart.Enabled = grpSettings.Enabled = false;
+            btnLoad.Enabled = grpSource.Enabled = false;
             lblFilesProcessed.Text = lblFileBytesProcessed.Text = lblFoldersProcessed.Text = "-";
             lblFilesFound.Text = lblFileBytesFound.Text = lblFoldersFound.Text = "-";
             listLog.Items.Clear();
             treeFolders.Nodes.Clear();
             treeFolders.Enabled = false;
+            foreach (var localFile in m_FileNodes.Keys)
+                localFile.FileUpdated -= LocalFileOnFileUpdated;
+            m_FileNodes.Clear();
+
             btnCancel.Enabled = true;
 
-            await job.Run();
-            job.ProgressUpdate -= JobOnProgressUpdate;
+            //await Task.Run(async () => await job.Load(m_CancelSource.Token));
+            await job.Load(m_CancelSource.Token);
+            if (m_CancelSource.IsCancellationRequested)
+                lblFilesFound.Text += " (Cancelled)";
 
-            MessageBox.Show("Run Ended", "Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            btnStart.Enabled = grpSettings.Enabled = true;
+            btnLoad.Enabled = grpSource.Enabled = true;
             btnCancel.Enabled = false;
             treeFolders.Enabled = true;
         }
-        
+
+
         private void btnCancel_Click(object sender, EventArgs e)
         {
             btnCancel.Enabled = false;
@@ -96,6 +105,20 @@ namespace OrganisePhotos.App
                    };
         }
 
+        
+        private void JobOnLoadProgress(object? sender, LoadProgressEventArgs e)
+        {
+            this.InvokeIfRequired(() =>
+                                  {
+                                      lblFilesFound.Text = e.TotalFiles.ToString();
+                                      lblFileBytesFound.Text = e.TotalFileSize.ToString();
+                                      lblFoldersFound.Text = e.TotalFolders.ToString();
+
+                                      if (e.LoadCompleted)
+                                          BindFolderTree(((LocalFolder)sender));
+                                  });
+        }
+
         private void JobOnProgressUpdate(object sender, ProgressUpdateEventArgs e)
         {
             this.InvokeIfRequired(() =>
@@ -106,29 +129,14 @@ namespace OrganisePhotos.App
                                           listLog.SelectedIndex = listLog.Items.Count - 1;
                                           listLog.SelectedIndex = -1;
                                       }
-
-                                      lblFilesFound.Text = e.TotalFiles.ToString();
-                                      lblFileBytesFound.Text = e.TotalFileSize.ToString();
-                                      lblFoldersFound.Text = e.TotalFolders.ToString();
-
+                                      
                                       lblFilesProcessed.Text = e.FilesProcessed.ToString();
                                       lblFileBytesProcessed.Text = e.FilesSizeProcessed.ToString();
                                       lblFoldersProcessed.Text = e.FoldersProcessed.ToString();
-
-                                      if (e.FinishedScan)
-                                          BindFolderTree(((CleanupJob)sender).RootFolder);
                                   });
         }
-
         
-        private void menuLoadDateTaken_Click(object sender, EventArgs e)
-        {
-            var node = treeFolders.SelectedNode;
-            
-            RunUpdate(UpdateFileDateTaken, node);
-        }
-
-        private void menuFixes_Click(object sender, EventArgs e)
+        private void menuItems_Click(object sender, EventArgs e)
         {
             var node = treeFolders.SelectedNode;
             if (sender == MenuLoadDateTaken)
@@ -185,7 +193,7 @@ namespace OrganisePhotos.App
             treeFolders.Enabled = true;
         }
 
-        private static TreeNode CreateFolderNode(LocalFolder localFolder)
+        private TreeNode CreateFolderNode(LocalFolder localFolder)
         {
             var treeNode = new TreeNode(localFolder.Dir.Name)
                            {
@@ -198,15 +206,28 @@ namespace OrganisePhotos.App
             return treeNode;
         }
 
-        private static TreeNode CreateFileNode(LocalFile localFile)
+        private TreeNode CreateFileNode(LocalFile localFile)
         {
-            return new TreeNode(LocalFileNodeName(localFile))
+            var node = new TreeNode(LocalFileNodeName(localFile))
                    {
                        Name = localFile.File.FullName,
                        Tag = localFile
                    };
+            localFile.FileUpdated += LocalFileOnFileUpdated;
+            m_FileNodes.Add(localFile, node);
+            return node;
         }
-        
+
+        private void LocalFileOnFileUpdated(object sender, EventArgs e)
+        {
+            var localFile = (LocalFile)sender;
+            var node = m_FileNodes[localFile];
+            this.InvokeIfRequired(() =>
+                                  {
+                                      node.Text = LocalFileNodeName(localFile);
+                                  });
+        }
+
         private static string LocalFileNodeName(LocalFile localFile)
         {
             var lastWrite = localFile.File.LastWriteTime;
@@ -245,7 +266,6 @@ namespace OrganisePhotos.App
                 return;
 
             await localFile.LoadDateTaken();
-            UpdateFileNodeText(node, localFile);
         }
 
         private async Task FixFileDateTaken(TreeNode node)
@@ -253,11 +273,7 @@ namespace OrganisePhotos.App
             if (!(node.Tag is LocalFile localFile))
                 return;
 
-            if (!localFile.DateTakenLoaded)
-                return;
-
             await localFile.FixInvalidDateTaken();
-            UpdateFileNodeText(node, localFile);
         }
         
         private async Task SetFileDateTaken(TreeNode node, DateTime value)
@@ -266,7 +282,6 @@ namespace OrganisePhotos.App
                 return;
 
             await localFile.SetDateTakenManually(value);
-            UpdateFileNodeText(node, localFile);
         }
         
         private async Task SetFileDatesFromDateTaken(TreeNode node)
@@ -274,7 +289,6 @@ namespace OrganisePhotos.App
             if (!(node.Tag is LocalFile localFile))
                 return;
             await localFile.SetFileDatesFromDateTaken();
-            UpdateFileNodeText(node, localFile);
         }
         
         private async Task SetDateTakenFromLastWrite(TreeNode node)
@@ -282,14 +296,8 @@ namespace OrganisePhotos.App
             if (!(node.Tag is LocalFile localFile))
                 return;
             await localFile.SetMissingDateTakenFromLastWrite();
-            UpdateFileNodeText(node, localFile);
         }
         
-        private void UpdateFileNodeText(TreeNode node, LocalFile localFile)
-        {
-            this.InvokeIfRequired(() => { node.Text = LocalFileNodeName(localFile); });
-        }
-
         #endregion
     }
 

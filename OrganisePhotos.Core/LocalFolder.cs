@@ -9,8 +9,11 @@ namespace OrganisePhotos.Core
 {
     public class LocalFolder
     {
-        private readonly CancellationToken m_CancellationToken;
+        private bool m_LoadCompleted;
 
+        internal bool IsRootFolder { get; }
+
+        public CleanupJobSettings Settings { get; }
         public DirectoryInfo Dir { get; }
 
         public List<LocalFile> Files { get; private set; }
@@ -20,36 +23,56 @@ namespace OrganisePhotos.Core
         public long TotalFileSize { get; private set; }
         public int TotalFolders { get; private set; }
 
-        public LocalFolder(DirectoryInfo dir, CancellationToken cancellationToken)
+        public event EventHandler<LoadProgressEventArgs> LoadProgress;
+        
+        public LocalFolder(CleanupJobSettings settings)
         {
-            Dir = dir;
-            m_CancellationToken = cancellationToken;
+            if (!settings.Validate(out var errors))
+                throw new ArgumentException($"Invalid settings:\r\n{string.Join("\r\n", errors)}");
+
+            Settings = settings;
+            IsRootFolder = true;
+            Dir = Settings.RootFolderDir;
         }
 
-        public async Task Load(Func<DirectoryInfo, bool> isIgnoredDir, Func<FileInfo, bool> isIgnoredFile, CleanupJobSettings settings, Action onProgress)
+        internal LocalFolder(DirectoryInfo dir, CleanupJobSettings settings)
+        {
+            Dir = dir;
+            IsRootFolder = false;
+            Settings = settings;
+        }
+
+        public async Task Load(CancellationToken cancellationToken)
         {
             TotalFolders = 1; // This folder
+
+            try
+            {
+
 
             await Task.Run(() =>
                            {
                                var files = new List<LocalFile>();
                                foreach (var file in Dir.EnumerateFiles())
                                {
-                                   if (m_CancellationToken.IsCancellationRequested)
+                                   if (cancellationToken.IsCancellationRequested)
                                        return;
 
-                                   if (isIgnoredFile(file))
+                                   if (Settings.IsFileIgnored(file))
                                        continue;
                                    
-                                   files.Add(new LocalFile(file, settings));
+                                   files.Add(new LocalFile(file, Settings));
 
                                    TotalFiles++;
                                    TotalFileSize += file.Length;
+
+                                   if (files.Count % 10 == 0)
+                                       OnLoadProgress();
                                }
 
                                Files = files;
 
-                           }, m_CancellationToken);
+                           }, cancellationToken);
 
             await Task.Run(async () =>
                            {
@@ -58,25 +81,40 @@ namespace OrganisePhotos.Core
 
                                foreach (var dir in Dir.EnumerateDirectories().OrderBy(d => d.Name))
                                {
-                                   if (m_CancellationToken.IsCancellationRequested)
+                                   if (cancellationToken.IsCancellationRequested)
                                        return;
 
-                                   if (isIgnoredDir(dir))
+                                   if (Settings.IsFolderIgnored(dir))
                                        continue;
 
-                                   var folder = new LocalFolder(dir, m_CancellationToken);
+                                   var folder = new LocalFolder(dir, Settings);
                                    folders.Add(folder);
-                                   await folder.Load(isIgnoredDir, isIgnoredFile, settings, onProgress);
+                                   await folder.Load(cancellationToken);
 
                                    TotalFiles += folder.TotalFiles;
                                    TotalFileSize += folder.TotalFileSize;
                                    TotalFolders += folder.TotalFolders;
-                                   onProgress();
+                                   OnLoadProgress();
                                }
 
                                Folders = folders;
 
-                           }, m_CancellationToken);
+                           }, cancellationToken);
+                
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+
+            m_LoadCompleted = IsRootFolder && !cancellationToken.IsCancellationRequested;
+            OnLoadProgress();
+        }
+
+        protected virtual void OnLoadProgress()
+        {
+            var e = new LoadProgressEventArgs(TotalFiles, TotalFileSize, TotalFolders, m_LoadCompleted);
+            LoadProgress?.Invoke(this, e);
         }
     }
 }

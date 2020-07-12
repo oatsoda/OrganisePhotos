@@ -9,7 +9,6 @@ namespace OrganisePhotos.Core
 {
     public class LocalFile
     {
-
         public FileInfo File { get; }
 
         public bool IsImage { get; }
@@ -21,6 +20,8 @@ namespace OrganisePhotos.Core
         public DateTime? DateTaken { get; private set;  }
 
         public string DateTakenCorrectRaw => DateTakenFixable ? DateTaken?.ToString("yyyy:MM:dd HH:mm:ss") : null;
+
+        public event EventHandler FileUpdated;
 
         public LocalFile(FileInfo file, CleanupJobSettings settings)
         {
@@ -45,25 +46,28 @@ namespace OrganisePhotos.Core
             DateTakenRaw = rawValue?.Value;
 
             if (string.IsNullOrWhiteSpace(DateTakenRaw))
+            {
+                OnFileUpdated();
                 return;
+            }
 
             if (DateTime.TryParseExact(DateTakenRaw, "yyyy:MM:dd HH:mm:ss", null, DateTimeStyles.None, out var dateTaken))
             {
                 DateTaken = dateTaken;
                 DateTakenValid = true;
-                return;
             }
-
-            if (DateTime.TryParseExact(DateTakenRaw, "yyyy:MM:dd:HH:mm:ss", null, DateTimeStyles.None, out var incorrectDateTaken))
+            else if (DateTime.TryParseExact(DateTakenRaw, "yyyy:MM:dd:HH:mm:ss", null, DateTimeStyles.None, out var incorrectDateTaken))
             {
                 DateTaken = incorrectDateTaken;
                 DateTakenFixable = true;
             }
+            
+            OnFileUpdated();
         }
 
         public async Task FixInvalidDateTaken()
         {
-            if (DateTakenValid || !DateTakenFixable)
+            if (!DateTakenLoaded || DateTakenValid || !DateTakenFixable)
                 return;
 
             var correctValue = DateTakenCorrectRaw;
@@ -73,6 +77,7 @@ namespace OrganisePhotos.Core
             DateTakenRaw = correctValue;
             DateTakenValid = true;
             DateTakenFixable = false;
+            OnFileUpdated();
         }
         
         public async Task SetDateTakenManually(DateTime value)
@@ -85,6 +90,7 @@ namespace OrganisePhotos.Core
             DateTakenValid = true;
             DateTakenFixable = false;
             DateTaken = value;
+            OnFileUpdated();
         }
 
         public async Task SetFileDatesFromDateTaken()
@@ -97,6 +103,7 @@ namespace OrganisePhotos.Core
                          File.LastWriteTime = DateTaken.Value;
                          File.CreationTime = DateTaken.Value;
                      });
+            OnFileUpdated();
         }
         
         public async Task SetMissingDateTakenFromLastWrite()
@@ -113,6 +120,7 @@ namespace OrganisePhotos.Core
             DateTakenValid = true;
             DateTakenFixable = false;
             DateTaken = lastWrite;
+            OnFileUpdated();
         }
         
         private async Task UpdateDateTaken(string dateValue)
@@ -125,6 +133,11 @@ namespace OrganisePhotos.Core
             var rawValue = exif.GetValue(ExifTag.DateTime);
             rawValue.TrySetValue(dateValue);
             await image.SaveAsync(File.FullName);
+        }
+        
+        protected virtual void OnFileUpdated()
+        {
+            FileUpdated?.Invoke(this, EventArgs.Empty);
         }
     }
 }

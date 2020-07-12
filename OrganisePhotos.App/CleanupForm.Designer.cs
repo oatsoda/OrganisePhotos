@@ -29,11 +29,12 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.btnStart = new System.Windows.Forms.Button();
+            this.btnLoad = new System.Windows.Forms.Button();
             this.txtFolderPath = new System.Windows.Forms.TextBox();
-            this.grpSettings = new System.Windows.Forms.GroupBox();
+            this.grpSource = new System.Windows.Forms.GroupBox();
             this.txtIgnoreFoldersStart = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.cboRenameDupeFiles = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -42,7 +43,6 @@
             this.cboSetCreatedDateFromDateTaken = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.cboFixDateTaken = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.listLog = new System.Windows.Forms.ListBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
@@ -52,7 +52,7 @@
             this.lblFoldersProcessed = new System.Windows.Forms.Label();
             this.toolTips = new System.Windows.Forms.ToolTip(this.components);
             this.btnCancel = new System.Windows.Forms.Button();
-            this.grpStats = new System.Windows.Forms.GroupBox();
+            this.grpLoadedTotals = new System.Windows.Forms.GroupBox();
             this.lblFilesFound = new System.Windows.Forms.Label();
             this.lblFileBytesFound = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
@@ -66,20 +66,24 @@
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
-            this.grpSettings.SuspendLayout();
-            this.grpStats.SuspendLayout();
+            this.grpAutoCleanupSettings = new System.Windows.Forms.GroupBox();
+            this.grpAutoCleanupProgress = new System.Windows.Forms.GroupBox();
+            this.grpSource.SuspendLayout();
+            this.grpLoadedTotals.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
+            this.grpAutoCleanupSettings.SuspendLayout();
+            this.grpAutoCleanupProgress.SuspendLayout();
             this.SuspendLayout();
             // 
-            // btnStart
+            // btnLoad
             // 
-            this.btnStart.Location = new System.Drawing.Point(338, 308);
-            this.btnStart.Name = "btnStart";
-            this.btnStart.Size = new System.Drawing.Size(75, 23);
-            this.btnStart.TabIndex = 0;
-            this.btnStart.Text = "Start";
-            this.btnStart.UseVisualStyleBackColor = true;
-            this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
+            this.btnLoad.Location = new System.Drawing.Point(338, 165);
+            this.btnLoad.Name = "btnLoad";
+            this.btnLoad.Size = new System.Drawing.Size(75, 23);
+            this.btnLoad.TabIndex = 0;
+            this.btnLoad.Text = "Load";
+            this.btnLoad.UseVisualStyleBackColor = true;
+            this.btnLoad.Click += new System.EventHandler(this.btnStart_Click);
             // 
             // txtFolderPath
             // 
@@ -90,26 +94,18 @@
             this.txtFolderPath.Text = "\\\\192.168.98.201\\photos\\2003.00.00 Ropley Station";
             this.txtFolderPath.TextChanged += new System.EventHandler(this.txtFolderPath_TextChanged);
             // 
-            // grpSettings
+            // grpSource
             // 
-            this.grpSettings.Controls.Add(this.txtIgnoreFoldersStart);
-            this.grpSettings.Controls.Add(this.label9);
-            this.grpSettings.Controls.Add(this.label8);
-            this.grpSettings.Controls.Add(this.cboRenameDupeFiles);
-            this.grpSettings.Controls.Add(this.label7);
-            this.grpSettings.Controls.Add(this.cboSetMissingDateTaken);
-            this.grpSettings.Controls.Add(this.label6);
-            this.grpSettings.Controls.Add(this.cboSetCreatedDateFromDateTaken);
-            this.grpSettings.Controls.Add(this.label2);
-            this.grpSettings.Controls.Add(this.cboFixDateTaken);
-            this.grpSettings.Controls.Add(this.label1);
-            this.grpSettings.Controls.Add(this.txtFolderPath);
-            this.grpSettings.Location = new System.Drawing.Point(12, 12);
-            this.grpSettings.Name = "grpSettings";
-            this.grpSettings.Size = new System.Drawing.Size(401, 286);
-            this.grpSettings.TabIndex = 2;
-            this.grpSettings.TabStop = false;
-            this.grpSettings.Text = "Settings";
+            this.grpSource.Controls.Add(this.txtIgnoreFoldersStart);
+            this.grpSource.Controls.Add(this.label9);
+            this.grpSource.Controls.Add(this.label1);
+            this.grpSource.Controls.Add(this.txtFolderPath);
+            this.grpSource.Location = new System.Drawing.Point(12, 12);
+            this.grpSource.Name = "grpSource";
+            this.grpSource.Size = new System.Drawing.Size(401, 147);
+            this.grpSource.TabIndex = 2;
+            this.grpSource.TabStop = false;
+            this.grpSource.Text = "Settings";
             // 
             // txtIgnoreFoldersStart
             // 
@@ -129,10 +125,19 @@
             this.label9.TabIndex = 3;
             this.label9.Text = "Ignore Folders Starting With";
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(15, 28);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(95, 15);
+            this.label1.TabIndex = 3;
+            this.label1.Text = "Root Folder Path";
+            // 
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(15, 240);
+            this.label8.Location = new System.Drawing.Point(26, 124);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(191, 15);
             this.label8.TabIndex = 5;
@@ -142,7 +147,7 @@
             // cboRenameDupeFiles
             // 
             this.cboRenameDupeFiles.FormattingEnabled = true;
-            this.cboRenameDupeFiles.Location = new System.Drawing.Point(244, 237);
+            this.cboRenameDupeFiles.Location = new System.Drawing.Point(255, 121);
             this.cboRenameDupeFiles.Name = "cboRenameDupeFiles";
             this.cboRenameDupeFiles.Size = new System.Drawing.Size(94, 23);
             this.cboRenameDupeFiles.TabIndex = 4;
@@ -151,7 +156,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(15, 211);
+            this.label7.Location = new System.Drawing.Point(26, 95);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(212, 15);
             this.label7.TabIndex = 5;
@@ -161,7 +166,7 @@
             // cboSetMissingDateTaken
             // 
             this.cboSetMissingDateTaken.FormattingEnabled = true;
-            this.cboSetMissingDateTaken.Location = new System.Drawing.Point(244, 208);
+            this.cboSetMissingDateTaken.Location = new System.Drawing.Point(255, 92);
             this.cboSetMissingDateTaken.Name = "cboSetMissingDateTaken";
             this.cboSetMissingDateTaken.Size = new System.Drawing.Size(94, 23);
             this.cboSetMissingDateTaken.TabIndex = 4;
@@ -170,7 +175,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(15, 182);
+            this.label6.Location = new System.Drawing.Point(26, 66);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(183, 15);
             this.label6.TabIndex = 5;
@@ -180,7 +185,7 @@
             // cboSetCreatedDateFromDateTaken
             // 
             this.cboSetCreatedDateFromDateTaken.FormattingEnabled = true;
-            this.cboSetCreatedDateFromDateTaken.Location = new System.Drawing.Point(244, 179);
+            this.cboSetCreatedDateFromDateTaken.Location = new System.Drawing.Point(255, 63);
             this.cboSetCreatedDateFromDateTaken.Name = "cboSetCreatedDateFromDateTaken";
             this.cboSetCreatedDateFromDateTaken.Size = new System.Drawing.Size(94, 23);
             this.cboSetCreatedDateFromDateTaken.TabIndex = 4;
@@ -189,7 +194,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(15, 153);
+            this.label2.Location = new System.Drawing.Point(26, 37);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(132, 15);
             this.label2.TabIndex = 5;
@@ -200,20 +205,11 @@
             // cboFixDateTaken
             // 
             this.cboFixDateTaken.FormattingEnabled = true;
-            this.cboFixDateTaken.Location = new System.Drawing.Point(244, 150);
+            this.cboFixDateTaken.Location = new System.Drawing.Point(255, 34);
             this.cboFixDateTaken.Name = "cboFixDateTaken";
             this.cboFixDateTaken.Size = new System.Drawing.Size(94, 23);
             this.cboFixDateTaken.TabIndex = 4;
             this.cboFixDateTaken.SelectedIndexChanged += new System.EventHandler(this.cboFixDateTaken_SelectedIndexChanged);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(15, 28);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(95, 15);
-            this.label1.TabIndex = 3;
-            this.label1.Text = "Root Folder Path";
             // 
             // listLog
             // 
@@ -222,7 +218,7 @@
             this.listLog.FormattingEnabled = true;
             this.listLog.HorizontalScrollbar = true;
             this.listLog.ItemHeight = 15;
-            this.listLog.Location = new System.Drawing.Point(12, 665);
+            this.listLog.Location = new System.Drawing.Point(12, 612);
             this.listLog.Name = "listLog";
             this.listLog.ScrollAlwaysVisible = true;
             this.listLog.Size = new System.Drawing.Size(1108, 259);
@@ -231,7 +227,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(83, 143);
+            this.label3.Location = new System.Drawing.Point(83, 28);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(86, 15);
             this.label3.TabIndex = 4;
@@ -240,7 +236,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(57, 168);
+            this.label4.Location = new System.Drawing.Point(57, 53);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(112, 15);
             this.label4.TabIndex = 4;
@@ -249,7 +245,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(68, 194);
+            this.label5.Location = new System.Drawing.Point(68, 79);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(101, 15);
             this.label5.TabIndex = 4;
@@ -258,7 +254,7 @@
             // lblFilesProcessed
             // 
             this.lblFilesProcessed.AutoSize = true;
-            this.lblFilesProcessed.Location = new System.Drawing.Point(187, 143);
+            this.lblFilesProcessed.Location = new System.Drawing.Point(187, 28);
             this.lblFilesProcessed.Name = "lblFilesProcessed";
             this.lblFilesProcessed.Size = new System.Drawing.Size(12, 15);
             this.lblFilesProcessed.TabIndex = 4;
@@ -267,7 +263,7 @@
             // lblFileBytesProcessed
             // 
             this.lblFileBytesProcessed.AutoSize = true;
-            this.lblFileBytesProcessed.Location = new System.Drawing.Point(187, 168);
+            this.lblFileBytesProcessed.Location = new System.Drawing.Point(187, 53);
             this.lblFileBytesProcessed.Name = "lblFileBytesProcessed";
             this.lblFileBytesProcessed.Size = new System.Drawing.Size(12, 15);
             this.lblFileBytesProcessed.TabIndex = 4;
@@ -276,7 +272,7 @@
             // lblFoldersProcessed
             // 
             this.lblFoldersProcessed.AutoSize = true;
-            this.lblFoldersProcessed.Location = new System.Drawing.Point(187, 194);
+            this.lblFoldersProcessed.Location = new System.Drawing.Point(187, 79);
             this.lblFoldersProcessed.Name = "lblFoldersProcessed";
             this.lblFoldersProcessed.Size = new System.Drawing.Size(12, 15);
             this.lblFoldersProcessed.TabIndex = 4;
@@ -285,7 +281,7 @@
             // btnCancel
             // 
             this.btnCancel.Enabled = false;
-            this.btnCancel.Location = new System.Drawing.Point(256, 308);
+            this.btnCancel.Location = new System.Drawing.Point(256, 165);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 5;
@@ -293,33 +289,25 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
-            // grpStats
+            // grpLoadedTotals
             // 
-            this.grpStats.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.grpStats.Controls.Add(this.lblFilesFound);
-            this.grpStats.Controls.Add(this.lblFileBytesFound);
-            this.grpStats.Controls.Add(this.label13);
-            this.grpStats.Controls.Add(this.lblFoldersFound);
-            this.grpStats.Controls.Add(this.label11);
-            this.grpStats.Controls.Add(this.label10);
-            this.grpStats.Controls.Add(this.label3);
-            this.grpStats.Controls.Add(this.label4);
-            this.grpStats.Controls.Add(this.lblFoldersProcessed);
-            this.grpStats.Controls.Add(this.label5);
-            this.grpStats.Controls.Add(this.lblFileBytesProcessed);
-            this.grpStats.Controls.Add(this.lblFilesProcessed);
-            this.grpStats.Location = new System.Drawing.Point(12, 337);
-            this.grpStats.Name = "grpStats";
-            this.grpStats.Size = new System.Drawing.Size(401, 312);
-            this.grpStats.TabIndex = 6;
-            this.grpStats.TabStop = false;
-            this.grpStats.Text = "Run Statistics";
+            this.grpLoadedTotals.Controls.Add(this.lblFilesFound);
+            this.grpLoadedTotals.Controls.Add(this.lblFileBytesFound);
+            this.grpLoadedTotals.Controls.Add(this.label13);
+            this.grpLoadedTotals.Controls.Add(this.lblFoldersFound);
+            this.grpLoadedTotals.Controls.Add(this.label11);
+            this.grpLoadedTotals.Controls.Add(this.label10);
+            this.grpLoadedTotals.Location = new System.Drawing.Point(12, 194);
+            this.grpLoadedTotals.Name = "grpLoadedTotals";
+            this.grpLoadedTotals.Size = new System.Drawing.Size(401, 115);
+            this.grpLoadedTotals.TabIndex = 6;
+            this.grpLoadedTotals.TabStop = false;
+            this.grpLoadedTotals.Text = "Loaded Totals";
             // 
             // lblFilesFound
             // 
             this.lblFilesFound.AutoSize = true;
-            this.lblFilesFound.Location = new System.Drawing.Point(187, 45);
+            this.lblFilesFound.Location = new System.Drawing.Point(187, 30);
             this.lblFilesFound.Name = "lblFilesFound";
             this.lblFilesFound.Size = new System.Drawing.Size(12, 15);
             this.lblFilesFound.TabIndex = 4;
@@ -328,7 +316,7 @@
             // lblFileBytesFound
             // 
             this.lblFileBytesFound.AutoSize = true;
-            this.lblFileBytesFound.Location = new System.Drawing.Point(187, 70);
+            this.lblFileBytesFound.Location = new System.Drawing.Point(187, 55);
             this.lblFileBytesFound.Name = "lblFileBytesFound";
             this.lblFileBytesFound.Size = new System.Drawing.Size(12, 15);
             this.lblFileBytesFound.TabIndex = 4;
@@ -337,7 +325,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(87, 96);
+            this.label13.Location = new System.Drawing.Point(87, 81);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(82, 15);
             this.label13.TabIndex = 4;
@@ -346,7 +334,7 @@
             // lblFoldersFound
             // 
             this.lblFoldersFound.AutoSize = true;
-            this.lblFoldersFound.Location = new System.Drawing.Point(187, 96);
+            this.lblFoldersFound.Location = new System.Drawing.Point(187, 81);
             this.lblFoldersFound.Name = "lblFoldersFound";
             this.lblFoldersFound.Size = new System.Drawing.Size(12, 15);
             this.lblFoldersFound.TabIndex = 4;
@@ -355,7 +343,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(76, 70);
+            this.label11.Location = new System.Drawing.Point(76, 55);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(93, 15);
             this.label11.TabIndex = 4;
@@ -364,7 +352,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(102, 45);
+            this.label10.Location = new System.Drawing.Point(102, 30);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(67, 15);
             this.label10.TabIndex = 4;
@@ -378,7 +366,7 @@
             this.treeFolders.ContextMenuStrip = this.contextMenuStrip1;
             this.treeFolders.Location = new System.Drawing.Point(432, 11);
             this.treeFolders.Name = "treeFolders";
-            this.treeFolders.Size = new System.Drawing.Size(688, 641);
+            this.treeFolders.Size = new System.Drawing.Size(688, 588);
             this.treeFolders.TabIndex = 7;
             this.treeFolders.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeFolders_NodeMouseClick);
             // 
@@ -399,63 +387,105 @@
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
             this.toolStripMenuItem1.Size = new System.Drawing.Size(278, 22);
             this.toolStripMenuItem1.Text = "Load Date Taken";
-            this.toolStripMenuItem1.Click += new System.EventHandler(this.menuLoadDateTaken_Click);
+            this.toolStripMenuItem1.Click += new System.EventHandler(this.menuItems_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
             this.toolStripMenuItem2.Size = new System.Drawing.Size(278, 22);
             this.toolStripMenuItem2.Text = "Fix Invalid DateTaken";
-            this.toolStripMenuItem2.Click += new System.EventHandler(this.menuFixes_Click);
+            this.toolStripMenuItem2.Click += new System.EventHandler(this.menuItems_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
             this.toolStripMenuItem3.Size = new System.Drawing.Size(278, 22);
             this.toolStripMenuItem3.Text = "Set missing Date Taken from Last Write";
-            this.toolStripMenuItem3.Click += new System.EventHandler(this.menuFixes_Click);
+            this.toolStripMenuItem3.Click += new System.EventHandler(this.menuItems_Click);
             // 
             // toolStripMenuItem4
             // 
             this.toolStripMenuItem4.Name = "toolStripMenuItem4";
             this.toolStripMenuItem4.Size = new System.Drawing.Size(278, 22);
             this.toolStripMenuItem4.Text = "Set Created / Last Write to Date Taken";
-            this.toolStripMenuItem4.Click += new System.EventHandler(this.menuFixes_Click);
+            this.toolStripMenuItem4.Click += new System.EventHandler(this.menuItems_Click);
             // 
             // toolStripMenuItem5
             // 
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
             this.toolStripMenuItem5.Size = new System.Drawing.Size(278, 22);
             this.toolStripMenuItem5.Text = "Set Date Taken Manually";
-            this.toolStripMenuItem5.Click += new System.EventHandler(this.menuFixes_Click);
+            this.toolStripMenuItem5.Click += new System.EventHandler(this.menuItems_Click);
+            // 
+            // grpAutoCleanupSettings
+            // 
+            this.grpAutoCleanupSettings.Controls.Add(this.label2);
+            this.grpAutoCleanupSettings.Controls.Add(this.cboFixDateTaken);
+            this.grpAutoCleanupSettings.Controls.Add(this.label8);
+            this.grpAutoCleanupSettings.Controls.Add(this.cboSetCreatedDateFromDateTaken);
+            this.grpAutoCleanupSettings.Controls.Add(this.cboRenameDupeFiles);
+            this.grpAutoCleanupSettings.Controls.Add(this.label6);
+            this.grpAutoCleanupSettings.Controls.Add(this.label7);
+            this.grpAutoCleanupSettings.Controls.Add(this.cboSetMissingDateTaken);
+            this.grpAutoCleanupSettings.Enabled = false;
+            this.grpAutoCleanupSettings.Location = new System.Drawing.Point(12, 316);
+            this.grpAutoCleanupSettings.Name = "grpAutoCleanupSettings";
+            this.grpAutoCleanupSettings.Size = new System.Drawing.Size(401, 166);
+            this.grpAutoCleanupSettings.TabIndex = 8;
+            this.grpAutoCleanupSettings.TabStop = false;
+            this.grpAutoCleanupSettings.Text = "Auto Cleanup";
+            // 
+            // grpAutoCleanupProgress
+            // 
+            this.grpAutoCleanupProgress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.grpAutoCleanupProgress.Controls.Add(this.label3);
+            this.grpAutoCleanupProgress.Controls.Add(this.lblFilesProcessed);
+            this.grpAutoCleanupProgress.Controls.Add(this.lblFileBytesProcessed);
+            this.grpAutoCleanupProgress.Controls.Add(this.label5);
+            this.grpAutoCleanupProgress.Controls.Add(this.lblFoldersProcessed);
+            this.grpAutoCleanupProgress.Controls.Add(this.label4);
+            this.grpAutoCleanupProgress.Enabled = false;
+            this.grpAutoCleanupProgress.Location = new System.Drawing.Point(12, 488);
+            this.grpAutoCleanupProgress.Name = "grpAutoCleanupProgress";
+            this.grpAutoCleanupProgress.Size = new System.Drawing.Size(401, 111);
+            this.grpAutoCleanupProgress.TabIndex = 9;
+            this.grpAutoCleanupProgress.TabStop = false;
+            this.grpAutoCleanupProgress.Text = "Cleanup Progress";
             // 
             // CleanupForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1132, 934);
+            this.ClientSize = new System.Drawing.Size(1132, 881);
+            this.Controls.Add(this.grpAutoCleanupProgress);
+            this.Controls.Add(this.grpAutoCleanupSettings);
             this.Controls.Add(this.treeFolders);
-            this.Controls.Add(this.grpStats);
+            this.Controls.Add(this.grpLoadedTotals);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.listLog);
-            this.Controls.Add(this.grpSettings);
-            this.Controls.Add(this.btnStart);
+            this.Controls.Add(this.grpSource);
+            this.Controls.Add(this.btnLoad);
             this.Name = "CleanupForm";
             this.Text = "Cleanup Photos Folder";
-            this.grpSettings.ResumeLayout(false);
-            this.grpSettings.PerformLayout();
-            this.grpStats.ResumeLayout(false);
-            this.grpStats.PerformLayout();
+            this.grpSource.ResumeLayout(false);
+            this.grpSource.PerformLayout();
+            this.grpLoadedTotals.ResumeLayout(false);
+            this.grpLoadedTotals.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
+            this.grpAutoCleanupSettings.ResumeLayout(false);
+            this.grpAutoCleanupSettings.PerformLayout();
+            this.grpAutoCleanupProgress.ResumeLayout(false);
+            this.grpAutoCleanupProgress.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Button btnStart;
+        private System.Windows.Forms.Button btnLoad;
         private System.Windows.Forms.TextBox txtFolderPath;
-        private System.Windows.Forms.GroupBox grpSettings;
+        private System.Windows.Forms.GroupBox grpSource;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ListBox listLog;
         private System.Windows.Forms.ComboBox cboFixDateTaken;
@@ -476,7 +506,7 @@
         private System.Windows.Forms.TextBox txtIgnoreFoldersStart;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Button btnCancel;
-        private System.Windows.Forms.GroupBox grpStats;
+        private System.Windows.Forms.GroupBox grpLoadedTotals;
         private System.Windows.Forms.Label lblFilesFound;
         private System.Windows.Forms.Label lblFileBytesFound;
         private System.Windows.Forms.Label label13;
@@ -490,6 +520,8 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem3;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem4;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem5;
+        private System.Windows.Forms.GroupBox grpAutoCleanupSettings;
+        private System.Windows.Forms.GroupBox grpAutoCleanupProgress;
     }
 }
 

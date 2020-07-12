@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,8 +8,6 @@ namespace OrganisePhotos.Core
     public class CleanupJob
     {
         private readonly CleanupJobSettings m_Settings;
-
-        private bool m_FinishedScan;
 
         private int m_FoldersProcessed;
         private int m_FilesProcessed;
@@ -22,15 +19,15 @@ namespace OrganisePhotos.Core
 
         public LocalFolder RootFolder { get; }
 
-        public CleanupJob(CleanupJobSettings settings, CancellationToken cancellationToken)
+        public CleanupJob(LocalFolder rootFolder, CancellationToken cancellationToken)
         {
-            m_Settings = settings;
+            if (!rootFolder.IsRootFolder)
+                throw new ArgumentException("Folder must be Root Folder", nameof(rootFolder));
+
+            m_Settings = rootFolder.Settings;
             m_CancellationToken = cancellationToken;
 
-            if (!m_Settings.Validate(out var errors))
-                throw new ArgumentException($"Invalid settings:\r\n{string.Join("\r\n", errors)}");
-            
-            RootFolder = new LocalFolder(m_Settings.RootFolderDir, m_CancellationToken);
+            RootFolder = rootFolder;
 
             /*
              * Cycle through all folders and files and:
@@ -50,11 +47,7 @@ namespace OrganisePhotos.Core
         {
             await Task.Run(async () =>
                            {
-                               OnProgress("Finding folders and files.");
-                               await RootFolder.Load(IsFolderIgnored, IsFileIgnored, m_Settings, () => OnProgress(null));
-                               m_FinishedScan = true;
-
-                               OnProgress("Folders and files found. Starting processing.");
+                               OnProgress("Starting processing.");
                                var result = await ProcessDirectory(RootFolder);
 
                                await ProcessDupes();
@@ -108,15 +101,7 @@ namespace OrganisePhotos.Core
             return result;
         }
 
-        private bool IsFolderIgnored(DirectoryInfo dir)
-        {
-            return m_Settings.IgnoreFoldersStartingWith.Any(f => dir.Name.StartsWith(f, StringComparison.CurrentCultureIgnoreCase));
-        }
 
-        private static bool IsFileIgnored(FileInfo file)
-        {
-            return string.Equals(file.Name, "thumbs.db", StringComparison.CurrentCultureIgnoreCase);
-        }
 
         private async Task ProcessDupes()
         {
@@ -149,9 +134,7 @@ namespace OrganisePhotos.Core
 
         private void OnProgress(string message)
         {
-            ProgressUpdate?.Invoke(this, new ProgressUpdateEventArgs(RootFolder.TotalFiles, RootFolder.TotalFileSize, RootFolder.TotalFolders, 
-                                                                     m_FinishedScan,
-                                                                     m_FilesProcessed, m_FilesSizeProcessed, m_FoldersProcessed,
+            ProgressUpdate?.Invoke(this, new ProgressUpdateEventArgs(m_FilesProcessed, m_FilesSizeProcessed, m_FoldersProcessed,
                                                                      message));
         }
     }
