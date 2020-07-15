@@ -37,10 +37,14 @@ namespace OrganisePhotos.Core
             DateTakenLoaded = true;
 
             IExifValue<string> rawValue;
+            IExifValue<string> rawValueOriginal;
+            IExifValue<string> rawValueDigitized;
             await using (var fs = File.OpenRead())
             {
                 var info = await Image.IdentifyAsync(fs);
                 rawValue = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTime);
+                //rawValueOriginal = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTimeOriginal);
+                //rawValueDigitized = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTimeDigitized);
             }
 
             DateTakenRaw = rawValue?.Value;
@@ -67,7 +71,7 @@ namespace OrganisePhotos.Core
 
         public async Task FixInvalidDateTaken()
         {
-            if (!DateTakenLoaded || DateTakenValid || !DateTakenFixable)
+            if (!IsImage || !DateTakenLoaded || DateTakenValid || !DateTakenFixable)
                 return;
 
             var correctValue = DateTakenCorrectRaw;
@@ -82,6 +86,9 @@ namespace OrganisePhotos.Core
         
         public async Task SetDateTakenManually(DateTime value)
         {
+            if (!IsImage)
+                return;
+
             var rawValue = value.ToString("yyyy:MM:dd HH:mm:ss");
             await UpdateDateTaken(rawValue);
 
@@ -95,7 +102,7 @@ namespace OrganisePhotos.Core
 
         public async Task SetFileDatesFromDateTaken()
         {
-            if (!DateTakenLoaded || !DateTakenValid || !DateTaken.HasValue)
+            if (!IsImage || !DateTakenLoaded || !DateTakenValid || !DateTaken.HasValue)
                 return;
 
             await Task.Run(() =>
@@ -108,7 +115,7 @@ namespace OrganisePhotos.Core
         
         public async Task SetMissingDateTakenFromLastWrite()
         {
-            if (!DateTakenLoaded || DateTaken.HasValue)
+            if (!IsImage || !DateTakenLoaded || DateTaken.HasValue)
                 return;
 
             var lastWrite = File.LastWriteTime;
@@ -125,16 +132,37 @@ namespace OrganisePhotos.Core
         
         private async Task UpdateDateTaken(string dateValue)
         {
+            await Task.Run(async () =>
+                           {
+
+                               var lastWrite = File.LastWriteTime;
+                               await WriteExifDateTaken(dateValue);
+                               // Set last write back
+                               File.LastWriteTime = lastWrite;
+                           });
+        }
+
+        private async Task WriteExifDateTaken(string dateValue)
+        {
             Image image;
             await using (var fileStream = File.OpenRead())
                 image = await Image.LoadAsync(fileStream);
 
             var exif = image.Metadata.ExifProfile;
+            if (exif == null)
+            {
+                exif = new ExifProfile();
+                image.Metadata.ExifProfile = exif;
+            }
+
             var rawValue = exif.GetValue(ExifTag.DateTime);
-            rawValue.TrySetValue(dateValue);
+            if (rawValue == null)
+                exif.SetValue(ExifTag.DateTime, dateValue);
+            else
+                rawValue.TrySetValue(dateValue);
             await image.SaveAsync(File.FullName);
         }
-        
+
         protected virtual void OnFileUpdated()
         {
             FileUpdated?.Invoke(this, EventArgs.Empty);

@@ -42,12 +42,9 @@ namespace OrganisePhotos.Core
                                                                  {
                                                                      ".bmp",
                                                                      ".gif",
-                                                                     ".heic",
-                                                                     ".ico",
                                                                      ".jpg",
                                                                      ".jpeg",
-                                                                     ".png",
-                                                                     ".tiff"
+                                                                     ".png"
                                                                  };
 
         public List<string> ImageExtensions()

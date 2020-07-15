@@ -370,6 +370,7 @@
             this.treeFolders.Name = "treeFolders";
             this.treeFolders.Size = new System.Drawing.Size(688, 617);
             this.treeFolders.TabIndex = 7;
+            this.treeFolders.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.treeFolders_AfterExpand);
             this.treeFolders.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeFolders_NodeMouseClick);
             // 
             // contextMenuStrip1

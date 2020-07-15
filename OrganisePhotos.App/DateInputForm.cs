@@ -10,7 +10,7 @@ namespace OrganisePhotos.App
         public DateInputForm()
         {
             InitializeComponent();
-            dateTimePicker.Value = SelectedValue = DateTime.Now.Date;
+            dateTimePicker.Value = SelectedValue = DateTime.Now.Date.AddHours(12);
         }
 
         private void dateTimePicker_ValueChanged(object sender, EventArgs e)

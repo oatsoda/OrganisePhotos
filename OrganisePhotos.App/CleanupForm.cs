@@ -197,7 +197,7 @@ namespace OrganisePhotos.App
             if (localFolder.Folders.Any())
                 treeNode.Nodes.AddRange(localFolder.Folders.Select(CreateFolderNode).ToArray());
             
-            treeNode.Nodes.AddRange(localFolder.Files.Select(CreateFileNode).ToArray());
+            treeNode.Nodes.AddRange(localFolder.Files.OrderBy(f => f.File.Name).Select(CreateFileNode).ToArray());
             return treeNode;
         }
 
@@ -296,6 +296,15 @@ namespace OrganisePhotos.App
         #endregion
         
         #region Tree Context Menu Methods
+        
+        private void treeFolders_AfterExpand(object sender, TreeViewEventArgs e)
+        {
+            // Load DateTaken on expand
+            if (e.Action != TreeViewAction.Expand)
+                return;
+
+            RunUpdate(UpdateFileDateTaken, e.Node);
+        }
 
         private void menuItems_Click(object sender, EventArgs e)
         {
