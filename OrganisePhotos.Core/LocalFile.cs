@@ -26,6 +26,9 @@ namespace OrganisePhotos.Core
                                            DateTakenRaw != DateTakenOriginalRaw ||
                                            DateTakenOriginalRaw != DateTakenDigitzedRaw;
 
+        public bool DateTakenMatchesFileLastWrite => DateTaken.HasValue &&
+                                                     (DateTaken.Value - File.LastWriteTime) == TimeSpan.Zero;
+
         public string DateTakenCorrectRaw => DateTakenFixable ? DateTaken?.ToString("yyyy:MM:dd HH:mm:ss") : null;
 
         public event EventHandler FileUpdated;

@@ -270,7 +270,7 @@ namespace OrganisePhotos.App
                 return;
             }
 
-            if (localFile.DateTaken != localFile.File.LastWriteTime)
+            if (!localFile.DateTakenMatchesFileLastWrite)
             {
                 treeNode.BackColor = Color.LawnGreen;
                 return;
