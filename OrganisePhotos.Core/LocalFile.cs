@@ -12,15 +12,19 @@ namespace OrganisePhotos.Core
         public FileInfo File { get; }
 
         public bool IsImage { get; }
-        
+
         public bool DateTakenLoaded { get; private set; }
         public string DateTakenRaw { get; private set; }
         public bool DateTakenValid { get; private set; }
         public bool DateTakenFixable { get; private set; }
-        public DateTime? DateTaken { get; private set;  }
-        
+        public DateTime? DateTaken { get; private set; }
+
         public string DateTakenOriginalRaw { get; private set; }
         public string DateTakenDigitzedRaw { get; private set; }
+
+        public bool DatesTakenOutOfSync => DateTakenRaw != DateTakenDigitzedRaw ||
+                                           DateTakenRaw != DateTakenOriginalRaw ||
+                                           DateTakenOriginalRaw != DateTakenDigitzedRaw;
 
         public string DateTakenCorrectRaw => DateTakenFixable ? DateTaken?.ToString("yyyy:MM:dd HH:mm:ss") : null;
 
@@ -70,7 +74,7 @@ namespace OrganisePhotos.Core
                 DateTaken = incorrectDateTaken;
                 DateTakenFixable = true;
             }
-            
+
             OnFileUpdated();
         }
 
@@ -88,7 +92,7 @@ namespace OrganisePhotos.Core
             DateTakenFixable = false;
             OnFileUpdated();
         }
-        
+
         public async Task SetDateTakenManually(DateTime value)
         {
             if (!IsImage)
@@ -110,6 +114,9 @@ namespace OrganisePhotos.Core
             if (!IsImage || !DateTakenLoaded)
                 return;
 
+            if (setFrom == SyncDateTaken.FromDateTaken && !DateTakenValid)
+                return;
+
             switch (setFrom)
             {
                 case SyncDateTaken.FromDateTaken:
@@ -119,21 +126,23 @@ namespace OrganisePhotos.Core
 
                 case SyncDateTaken.FromDateDigitized:
                     await UpdateDateTaken(DateTakenDigitzedRaw, ExifTag.DateTime, ExifTag.DateTimeOriginal);
+                    DateTakenLoaded = false;
                     await LoadDateTaken();
                     break;
 
                 case SyncDateTaken.FromDateOriginallyTaken:
                     await UpdateDateTaken(DateTakenOriginalRaw, ExifTag.DateTime, ExifTag.DateTimeDigitized);
+                    DateTakenLoaded = false;
                     await LoadDateTaken();
                     break;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(setFrom), setFrom, null);
             }
-            
+
             OnFileUpdated();
         }
-
+        
         public async Task SetFileDatesFromDateTaken()
         {
             if (!IsImage || !DateTakenLoaded || !DateTakenValid || !DateTaken.HasValue)
@@ -144,6 +153,16 @@ namespace OrganisePhotos.Core
                          File.LastWriteTime = DateTaken.Value;
                          File.CreationTime = DateTaken.Value;
                      }).ConfigureAwait(false);
+            OnFileUpdated();
+        }
+
+        public async Task SetFileDatesManually(DateTime value)
+        {
+            await Task.Run(() =>
+                           {
+                               File.LastWriteTime = value;
+                               File.CreationTime = value;
+                           }).ConfigureAwait(false);
             OnFileUpdated();
         }
         

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,6 +27,10 @@ namespace OrganisePhotos.App
         private ToolStripMenuItem MenuSetDatesTakenFromDateTaken => toolStripMenuItem7;
         private ToolStripMenuItem MenuSetDatesTakenFromDateDigitized => toolStripMenuItem8;
         private ToolStripMenuItem MenuSetDatesTakenFromOriginalDateTaken => toolStripMenuItem9;
+
+        private ToolStripMenuItem MenuSetFileDatesManually => toolStripMenuItem10;
+
+        private bool m_TreeViewInOperation;
 
         private readonly Dictionary<LocalFile, TreeNode> m_FileNodes = new Dictionary<LocalFile, TreeNode>();
 
@@ -224,6 +229,7 @@ namespace OrganisePhotos.App
             this.InvokeIfRequired(() =>
                                   {
                                       node.Text = LocalFileNodeName(localFile);
+                                      SetNodeColour(node, localFile);
                                   }, true);
         }
 
@@ -239,6 +245,40 @@ namespace OrganisePhotos.App
             return $"{localFile.File.Name} | Write: {lastWrite.ToShortDateString()} {lastWrite.ToShortTimeString()} | Create: {created.ToShortDateString()} {created.ToShortTimeString()} | Taken: {dateTaken}";
         }
 
+        private static void SetNodeColour(TreeNode treeNode, LocalFile localFile)
+        {
+            if (!localFile.IsImage || !localFile.DateTakenLoaded || (localFile.DateTakenValid && localFile.DatesTakenOutOfSync))
+                return;
+
+            if (!localFile.DateTakenValid)
+            {
+                treeNode.BackColor = !localFile.DateTakenFixable
+                                         ? Color.Red
+                                         : Color.Orange;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(localFile.DateTakenRaw))
+            {
+                treeNode.BackColor = Color.Yellow;
+                return;
+            }
+
+            if (localFile.DatesTakenOutOfSync)
+            {
+                treeNode.BackColor = Color.Khaki;
+                return;
+            }
+
+            if (localFile.DateTaken != localFile.File.LastWriteTime)
+            {
+                treeNode.BackColor = Color.LawnGreen;
+                return;
+            }
+
+            treeNode.BackColor = Color.White;
+        }
+
         #endregion
 
         #region Update Tree Methods
@@ -250,15 +290,30 @@ namespace OrganisePhotos.App
                             ? new[] { node }
                             : node.Nodes.Cast<TreeNode>().Where(n => n.Tag is LocalFile).ToArray();
 
-            this.InvokeIfRequired(() => { treeFolders.Enabled = false; }, true);
+            this.InvokeIfRequired(() =>
+                                  {
+                                      Cursor = Cursors.WaitCursor;
+                                      m_TreeViewInOperation = true;
+                                  }, true);
 
-            await Task.Run(() =>
-                           {
-                               var tasks = nodes.Select(action).ToArray();
-                               Task.WaitAll(tasks);
-                           });
+            try
+            {
+                await Task.Run(() =>
+                               {
+                                   var tasks = nodes.Select(action).ToArray();
+                                   Task.WaitAll(tasks);
+                               });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Exception: \r\n{ex}", "Exception Occurred", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
-            this.InvokeIfRequired(() => { treeFolders.Enabled = true; }, true);
+            this.InvokeIfRequired(() =>
+                                  {
+                                      m_TreeViewInOperation = false;
+                                      Cursor = Cursors.Default;
+                                  }, true);
         }
 
         private static async Task LoadFileDateTaken(TreeNode node)
@@ -307,12 +362,29 @@ namespace OrganisePhotos.App
             await localFile.SetMissingDateTakenFromLastWrite();
         }
 
+        private static async Task SetFileDates(TreeNode node, DateTime value)
+        {
+            if (!(node.Tag is LocalFile localFile))
+                return;
+
+            await localFile.SetFileDatesManually(value);
+        }
+
         #endregion
         
         #region Tree Context Menu Methods
         
+        private void treeFolders_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            if (m_TreeViewInOperation)
+                e.Cancel = true;
+        }
+        
         private async void treeFolders_AfterExpand(object sender, TreeViewEventArgs e)
         {
+            if (!chkLoadOnExpand.Checked)
+                return;
+
             // Load DateTaken on expand
             if (e.Action != TreeViewAction.Expand)
                 return;
@@ -360,6 +432,15 @@ namespace OrganisePhotos.App
             {
                 await RunUpdate(n => SyncFileDatesTaken(n, LocalFile.SyncDateTaken.FromDateOriginallyTaken), node);
             }
+            else if (sender == MenuSetFileDatesManually)
+            {
+                var dateInput = new DateInputForm();
+                var result = dateInput.ShowDialog(this);
+                if (result != DialogResult.OK)
+                    return;
+
+                await RunUpdate(n => SetFileDates(n, dateInput.SelectedValue), node);
+            }
         }
 
         private void treeFolders_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -370,6 +451,9 @@ namespace OrganisePhotos.App
 
         private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
         {
+            if (m_TreeViewInOperation)
+                e.Cancel = true;
+
             var rootNode = treeFolders.Nodes[0];
             if (treeFolders.SelectedNode == rootNode && rootNode.Nodes.Cast<TreeNode>().Any(n => n.Tag is LocalFolder))
                 e.Cancel = true;

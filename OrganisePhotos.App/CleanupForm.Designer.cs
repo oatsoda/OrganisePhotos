@@ -70,10 +70,12 @@
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem8 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem9 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem10 = new System.Windows.Forms.ToolStripMenuItem();
             this.grpAutoCleanupSettings = new System.Windows.Forms.GroupBox();
             this.grpAutoCleanupProgress = new System.Windows.Forms.GroupBox();
             this.btnProcess = new System.Windows.Forms.Button();
             this.btnCancelProcess = new System.Windows.Forms.Button();
+            this.chkLoadOnExpand = new System.Windows.Forms.CheckBox();
             this.grpSource.SuspendLayout();
             this.grpLoadedTotals.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -224,10 +226,10 @@
             this.listLog.FormattingEnabled = true;
             this.listLog.HorizontalScrollbar = true;
             this.listLog.ItemHeight = 15;
-            this.listLog.Location = new System.Drawing.Point(432, 642);
+            this.listLog.Location = new System.Drawing.Point(432, 702);
             this.listLog.Name = "listLog";
             this.listLog.ScrollAlwaysVisible = true;
-            this.listLog.Size = new System.Drawing.Size(1070, 229);
+            this.listLog.Size = new System.Drawing.Size(1070, 169);
             this.listLog.TabIndex = 3;
             // 
             // label3
@@ -372,8 +374,9 @@
             this.treeFolders.ContextMenuStrip = this.contextMenuStrip1;
             this.treeFolders.Location = new System.Drawing.Point(432, 11);
             this.treeFolders.Name = "treeFolders";
-            this.treeFolders.Size = new System.Drawing.Size(1070, 617);
+            this.treeFolders.Size = new System.Drawing.Size(1070, 660);
             this.treeFolders.TabIndex = 7;
+            this.treeFolders.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeFolders_BeforeExpand);
             this.treeFolders.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.treeFolders_AfterExpand);
             this.treeFolders.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeFolders_NodeMouseClick);
             // 
@@ -385,9 +388,10 @@
             this.toolStripMenuItem3,
             this.toolStripMenuItem4,
             this.toolStripMenuItem5,
-            this.toolStripMenuItem6});
+            this.toolStripMenuItem6,
+            this.toolStripMenuItem10});
             this.contextMenuStrip1.Name = "contextMenuTreeFolders";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(279, 136);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(279, 158);
             this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
             // 
             // toolStripMenuItem1
@@ -422,7 +426,7 @@
             // 
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
             this.toolStripMenuItem5.Size = new System.Drawing.Size(278, 22);
-            this.toolStripMenuItem5.Text = "Set Date Taken Manually";
+            this.toolStripMenuItem5.Text = "Set Date Taken Manually...";
             this.toolStripMenuItem5.Click += new System.EventHandler(this.menuItems_Click);
             // 
             // toolStripMenuItem6
@@ -455,6 +459,13 @@
             this.toolStripMenuItem9.Size = new System.Drawing.Size(207, 22);
             this.toolStripMenuItem9.Text = "From Original Date Taken";
             this.toolStripMenuItem9.Click += new System.EventHandler(this.menuItems_Click);
+            // 
+            // toolStripMenuItem10
+            // 
+            this.toolStripMenuItem10.Name = "toolStripMenuItem10";
+            this.toolStripMenuItem10.Size = new System.Drawing.Size(278, 22);
+            this.toolStripMenuItem10.Text = "Set Created / Last Write Manually...";
+            this.toolStripMenuItem10.Click += new System.EventHandler(this.menuItems_Click);
             // 
             // grpAutoCleanupSettings
             // 
@@ -514,11 +525,26 @@
             this.btnCancelProcess.UseVisualStyleBackColor = true;
             this.btnCancelProcess.Click += new System.EventHandler(this.btnCancelProcess_Click);
             // 
+            // chkLoadOnExpand
+            // 
+            this.chkLoadOnExpand.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.chkLoadOnExpand.AutoSize = true;
+            this.chkLoadOnExpand.Checked = true;
+            this.chkLoadOnExpand.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkLoadOnExpand.Location = new System.Drawing.Point(432, 677);
+            this.chkLoadOnExpand.Name = "chkLoadOnExpand";
+            this.chkLoadOnExpand.Size = new System.Drawing.Size(174, 19);
+            this.chkLoadOnExpand.TabIndex = 10;
+            this.chkLoadOnExpand.Text = "Load dates taken on expand";
+            this.chkLoadOnExpand.UseVisualStyleBackColor = true;
+            // 
             // CleanupForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1514, 881);
+            this.Controls.Add(this.chkLoadOnExpand);
             this.Controls.Add(this.btnCancelProcess);
             this.Controls.Add(this.btnProcess);
             this.Controls.Add(this.grpAutoCleanupProgress);
@@ -541,6 +567,7 @@
             this.grpAutoCleanupProgress.ResumeLayout(false);
             this.grpAutoCleanupProgress.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -591,6 +618,8 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem7;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem8;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem9;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem10;
+        private System.Windows.Forms.CheckBox chkLoadOnExpand;
     }
 }
 
