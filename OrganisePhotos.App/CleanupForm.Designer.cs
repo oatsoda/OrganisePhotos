@@ -66,6 +66,10 @@
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem8 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem9 = new System.Windows.Forms.ToolStripMenuItem();
             this.grpAutoCleanupSettings = new System.Windows.Forms.GroupBox();
             this.grpAutoCleanupProgress = new System.Windows.Forms.GroupBox();
             this.btnProcess = new System.Windows.Forms.Button();
@@ -93,7 +97,7 @@
             this.txtFolderPath.Name = "txtFolderPath";
             this.txtFolderPath.Size = new System.Drawing.Size(368, 23);
             this.txtFolderPath.TabIndex = 1;
-            this.txtFolderPath.Text = "\\\\192.168.98.201\\photos\\2003.00.00 Ropley Station";
+            this.txtFolderPath.Text = "\\\\192.168.98.201\\photos\\2003.07.09 Hangers Summer 2003";
             this.txtFolderPath.TextChanged += new System.EventHandler(this.txtFolderPath_TextChanged);
             // 
             // grpSource
@@ -223,7 +227,7 @@
             this.listLog.Location = new System.Drawing.Point(432, 642);
             this.listLog.Name = "listLog";
             this.listLog.ScrollAlwaysVisible = true;
-            this.listLog.Size = new System.Drawing.Size(688, 229);
+            this.listLog.Size = new System.Drawing.Size(1070, 229);
             this.listLog.TabIndex = 3;
             // 
             // label3
@@ -368,7 +372,7 @@
             this.treeFolders.ContextMenuStrip = this.contextMenuStrip1;
             this.treeFolders.Location = new System.Drawing.Point(432, 11);
             this.treeFolders.Name = "treeFolders";
-            this.treeFolders.Size = new System.Drawing.Size(688, 617);
+            this.treeFolders.Size = new System.Drawing.Size(1070, 617);
             this.treeFolders.TabIndex = 7;
             this.treeFolders.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.treeFolders_AfterExpand);
             this.treeFolders.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeFolders_NodeMouseClick);
@@ -380,9 +384,10 @@
             this.toolStripMenuItem2,
             this.toolStripMenuItem3,
             this.toolStripMenuItem4,
-            this.toolStripMenuItem5});
+            this.toolStripMenuItem5,
+            this.toolStripMenuItem6});
             this.contextMenuStrip1.Name = "contextMenuTreeFolders";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(279, 114);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(279, 136);
             this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
             // 
             // toolStripMenuItem1
@@ -419,6 +424,37 @@
             this.toolStripMenuItem5.Size = new System.Drawing.Size(278, 22);
             this.toolStripMenuItem5.Text = "Set Date Taken Manually";
             this.toolStripMenuItem5.Click += new System.EventHandler(this.menuItems_Click);
+            // 
+            // toolStripMenuItem6
+            // 
+            this.toolStripMenuItem6.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem7,
+            this.toolStripMenuItem8,
+            this.toolStripMenuItem9});
+            this.toolStripMenuItem6.Name = "toolStripMenuItem6";
+            this.toolStripMenuItem6.Size = new System.Drawing.Size(278, 22);
+            this.toolStripMenuItem6.Text = "Sync Dates Taken";
+            // 
+            // toolStripMenuItem7
+            // 
+            this.toolStripMenuItem7.Name = "toolStripMenuItem7";
+            this.toolStripMenuItem7.Size = new System.Drawing.Size(207, 22);
+            this.toolStripMenuItem7.Text = "From Date Taken";
+            this.toolStripMenuItem7.Click += new System.EventHandler(this.menuItems_Click);
+            // 
+            // toolStripMenuItem8
+            // 
+            this.toolStripMenuItem8.Name = "toolStripMenuItem8";
+            this.toolStripMenuItem8.Size = new System.Drawing.Size(207, 22);
+            this.toolStripMenuItem8.Text = "From Date Digitized";
+            this.toolStripMenuItem8.Click += new System.EventHandler(this.menuItems_Click);
+            // 
+            // toolStripMenuItem9
+            // 
+            this.toolStripMenuItem9.Name = "toolStripMenuItem9";
+            this.toolStripMenuItem9.Size = new System.Drawing.Size(207, 22);
+            this.toolStripMenuItem9.Text = "From Original Date Taken";
+            this.toolStripMenuItem9.Click += new System.EventHandler(this.menuItems_Click);
             // 
             // grpAutoCleanupSettings
             // 
@@ -482,7 +518,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1132, 881);
+            this.ClientSize = new System.Drawing.Size(1514, 881);
             this.Controls.Add(this.btnCancelProcess);
             this.Controls.Add(this.btnProcess);
             this.Controls.Add(this.grpAutoCleanupProgress);
@@ -551,6 +587,10 @@
         private System.Windows.Forms.GroupBox grpAutoCleanupProgress;
         private System.Windows.Forms.Button btnProcess;
         private System.Windows.Forms.Button btnCancelProcess;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem6;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem7;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem8;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem9;
     }
 }
 

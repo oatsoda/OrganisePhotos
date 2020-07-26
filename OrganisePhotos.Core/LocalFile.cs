@@ -18,6 +18,9 @@ namespace OrganisePhotos.Core
         public bool DateTakenValid { get; private set; }
         public bool DateTakenFixable { get; private set; }
         public DateTime? DateTaken { get; private set;  }
+        
+        public string DateTakenOriginalRaw { get; private set; }
+        public string DateTakenDigitzedRaw { get; private set; }
 
         public string DateTakenCorrectRaw => DateTakenFixable ? DateTaken?.ToString("yyyy:MM:dd HH:mm:ss") : null;
 
@@ -43,11 +46,13 @@ namespace OrganisePhotos.Core
             {
                 var info = await Image.IdentifyAsync(fs);
                 rawValue = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTime);
-                //rawValueOriginal = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTimeOriginal);
-                //rawValueDigitized = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTimeDigitized);
+                rawValueOriginal = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTimeOriginal);
+                rawValueDigitized = info.Metadata.ExifProfile?.GetValue(ExifTag.DateTimeDigitized);
             }
 
             DateTakenRaw = rawValue?.Value;
+            DateTakenOriginalRaw = rawValueOriginal?.Value;
+            DateTakenDigitzedRaw = rawValueDigitized?.Value;
 
             if (string.IsNullOrWhiteSpace(DateTakenRaw))
             {
@@ -76,7 +81,7 @@ namespace OrganisePhotos.Core
 
             var correctValue = DateTakenCorrectRaw;
 
-            await UpdateDateTaken(correctValue);
+            await UpdateDateTaken(correctValue, ExifTag.DateTime);
 
             DateTakenRaw = correctValue;
             DateTakenValid = true;
@@ -90,13 +95,42 @@ namespace OrganisePhotos.Core
                 return;
 
             var rawValue = value.ToString("yyyy:MM:dd HH:mm:ss");
-            await UpdateDateTaken(rawValue);
+            await UpdateDateTaken(rawValue, ExifTag.DateTime);
 
             DateTakenLoaded = true;
             DateTakenRaw = rawValue;
             DateTakenValid = true;
             DateTakenFixable = false;
             DateTaken = value;
+            OnFileUpdated();
+        }
+
+        public async Task SyncDatesTaken(SyncDateTaken setFrom)
+        {
+            if (!IsImage || !DateTakenLoaded)
+                return;
+
+            switch (setFrom)
+            {
+                case SyncDateTaken.FromDateTaken:
+                    await UpdateDateTaken(DateTakenRaw, ExifTag.DateTimeOriginal, ExifTag.DateTimeDigitized);
+                    DateTakenDigitzedRaw = DateTakenOriginalRaw = DateTakenRaw;
+                    break;
+
+                case SyncDateTaken.FromDateDigitized:
+                    await UpdateDateTaken(DateTakenDigitzedRaw, ExifTag.DateTime, ExifTag.DateTimeOriginal);
+                    await LoadDateTaken();
+                    break;
+
+                case SyncDateTaken.FromDateOriginallyTaken:
+                    await UpdateDateTaken(DateTakenOriginalRaw, ExifTag.DateTime, ExifTag.DateTimeDigitized);
+                    await LoadDateTaken();
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(setFrom), setFrom, null);
+            }
+            
             OnFileUpdated();
         }
 
@@ -109,7 +143,7 @@ namespace OrganisePhotos.Core
                      {
                          File.LastWriteTime = DateTaken.Value;
                          File.CreationTime = DateTaken.Value;
-                     });
+                     }).ConfigureAwait(false);
             OnFileUpdated();
         }
         
@@ -120,7 +154,7 @@ namespace OrganisePhotos.Core
 
             var lastWrite = File.LastWriteTime;
             var rawValue = lastWrite.ToString("yyyy:MM:dd HH:mm:ss");
-            await UpdateDateTaken(rawValue);
+            await UpdateDateTaken(rawValue, ExifTag.DateTime);
 
             DateTakenLoaded = true;
             DateTakenRaw = rawValue;
@@ -130,19 +164,21 @@ namespace OrganisePhotos.Core
             OnFileUpdated();
         }
         
-        private async Task UpdateDateTaken(string dateValue)
+        private async Task UpdateDateTaken(string dateValue, params ExifTag<string>[] exifDateTags)
         {
             await Task.Run(async () =>
                            {
 
                                var lastWrite = File.LastWriteTime;
-                               await WriteExifDateTaken(dateValue);
-                               // Set last write back
+                               var created = File.CreationTime;
+                               await WriteExifDateTaken(dateValue, exifDateTags);
+                               //Set last write / create back
                                File.LastWriteTime = lastWrite;
-                           });
+                               File.CreationTime = created;
+                           }).ConfigureAwait(false);
         }
 
-        private async Task WriteExifDateTaken(string dateValue)
+        private async Task WriteExifDateTaken(string dateValue, params ExifTag<string>[] exifDateTags)
         {
             Image image;
             await using (var fileStream = File.OpenRead())
@@ -155,17 +191,28 @@ namespace OrganisePhotos.Core
                 image.Metadata.ExifProfile = exif;
             }
 
-            var rawValue = exif.GetValue(ExifTag.DateTime);
-            if (rawValue == null)
-                exif.SetValue(ExifTag.DateTime, dateValue);
-            else
-                rawValue.TrySetValue(dateValue);
+            foreach (var exifDateTag in exifDateTags)
+            {
+                var rawValue = exif.GetValue(exifDateTag);
+                if (rawValue == null)
+                    exif.SetValue(exifDateTag, dateValue);
+                else
+                    rawValue.TrySetValue(dateValue);
+            }
+
             await image.SaveAsync(File.FullName);
         }
 
         protected virtual void OnFileUpdated()
         {
             FileUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        public enum SyncDateTaken
+        {
+            FromDateTaken,
+            FromDateDigitized,
+            FromDateOriginallyTaken
         }
     }
 }
