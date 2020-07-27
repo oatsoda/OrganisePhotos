@@ -371,6 +371,7 @@
             this.treeFolders.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.treeFolders.CheckBoxes = true;
             this.treeFolders.ContextMenuStrip = this.contextMenuStrip1;
             this.treeFolders.Location = new System.Drawing.Point(432, 11);
             this.treeFolders.Name = "treeFolders";

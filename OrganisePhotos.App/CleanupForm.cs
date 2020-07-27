@@ -286,6 +286,14 @@ namespace OrganisePhotos.App
                             ? new[] { node }
                             : node.Nodes.Cast<TreeNode>().Where(n => n.Tag is LocalFile).ToArray();
 
+            // If at file level, check for checked in the same folder as these should be updated rather than single file
+            if (node.Tag is LocalFile)
+            {
+                var checkedInFolder = node.Parent.Nodes.Cast<TreeNode>().Where(n => n.Checked && n.Tag is LocalFile).ToArray();
+                if (checkedInFolder.Length > 0)
+                    nodes = checkedInFolder;
+            }
+
             this.InvokeIfRequired(() =>
                                   {
                                       Cursor = Cursors.WaitCursor;
@@ -296,8 +304,9 @@ namespace OrganisePhotos.App
             {
                 await Task.Run(() =>
                                {
-                                   var tasks = nodes.Select(action).ToArray();
-                                   Task.WaitAll(tasks);
+                                   nodes.RunInParallel(action, 5);
+                                   //var tasks = nodes.Select(action).ToArray();
+                                   //Task.WaitAll(tasks);
                                });
             }
             catch (Exception ex)
