@@ -26,8 +26,9 @@ namespace OrganisePhotos.Core
                                            DateTakenRaw != DateTakenOriginalRaw ||
                                            DateTakenOriginalRaw != DateTakenDigitzedRaw;
 
-        public bool DateTakenMatchesFileLastWrite => DateTaken.HasValue &&
-                                                     (DateTaken.Value - File.LastWriteTime) == TimeSpan.Zero;
+        public bool DateTakenMatchesFileLastWrite => DateTaken.HasValue && DatesWithinSeconds(DateTaken.Value, File.LastWriteTime, 1);
+
+        public bool FileDatesMatch => DatesWithinSeconds(File.CreationTime, File.LastWriteTime, 1);
 
         public string DateTakenCorrectRaw => DateTakenFixable ? DateTaken?.ToString("yyyy:MM:dd HH:mm:ss") : null;
 
@@ -229,6 +230,23 @@ namespace OrganisePhotos.Core
         {
             FileUpdated?.Invoke(this, EventArgs.Empty);
         }
+
+        public string DisplayName
+        {
+            get
+            {
+                var lastWrite = File.LastWriteTime;
+                var created = File.CreationTime;
+                var validDisplay = DateTakenValid ? "" : DateTakenFixable ? "Fixable" : "Invalid";
+                var dateTaken = !DateTakenLoaded
+                                    ? "(not loaded)"
+                                    : $"{DateTakenRaw}{validDisplay} [Orig: {DateTakenOriginalRaw} Digit: {DateTakenDigitzedRaw}]";
+
+                return $"{File.Name} | Write: {lastWrite:dd/MM/yyyy HH:mm:ss} | Create: {created:dd/MM/yyyy HH:mm:ss} | Taken: {dateTaken}";
+            }
+        }
+
+        private static bool DatesWithinSeconds(DateTime one, DateTime two, double seconds) => Math.Abs((one - two).TotalSeconds) <= seconds;
 
         public enum SyncDateTaken
         {

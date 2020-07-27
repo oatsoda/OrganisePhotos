@@ -212,7 +212,7 @@ namespace OrganisePhotos.App
 
         private TreeNode CreateFileNode(LocalFile localFile)
         {
-            var node = new TreeNode(LocalFileNodeName(localFile))
+            var node = new TreeNode(localFile.DisplayName)
                    {
                        Name = localFile.File.FullName,
                        Tag = localFile
@@ -228,26 +228,16 @@ namespace OrganisePhotos.App
             var node = m_FileNodes[localFile];
             this.InvokeIfRequired(() =>
                                   {
-                                      node.Text = LocalFileNodeName(localFile);
+                                      node.Text = localFile.DisplayName;
                                       SetNodeColour(node, localFile);
                                   }, true);
         }
 
-        private static string LocalFileNodeName(LocalFile localFile)
-        {
-            var lastWrite = localFile.File.LastWriteTime;
-            var created = localFile.File.CreationTime;
-            var validDisplay = localFile.DateTakenValid ? "" : localFile.DateTakenFixable ? " Fixable" : " Invalid";
-            var dateTaken = !localFile.DateTakenLoaded
-                                ? "(not loaded)"
-                                : $"{localFile.DateTakenRaw}{validDisplay} [{localFile.DateTakenOriginalRaw} {localFile.DateTakenDigitzedRaw}]";
-                
-            return $"{localFile.File.Name} | Write: {lastWrite.ToShortDateString()} {lastWrite.ToShortTimeString()} | Create: {created.ToShortDateString()} {created.ToShortTimeString()} | Taken: {dateTaken}";
-        }
+
 
         private static void SetNodeColour(TreeNode treeNode, LocalFile localFile)
         {
-            if (!localFile.IsImage || !localFile.DateTakenLoaded || (localFile.DateTakenValid && localFile.DatesTakenOutOfSync))
+            if (!localFile.IsImage || !localFile.DateTakenLoaded)
                 return;
 
             if (!localFile.DateTakenValid)
@@ -273,6 +263,12 @@ namespace OrganisePhotos.App
             if (!localFile.DateTakenMatchesFileLastWrite)
             {
                 treeNode.BackColor = Color.LawnGreen;
+                return;
+            }
+
+            if (!localFile.FileDatesMatch)
+            {
+                treeNode.BackColor = Color.Bisque;
                 return;
             }
 
