@@ -76,6 +76,7 @@
             this.btnProcess = new System.Windows.Forms.Button();
             this.btnCancelProcess = new System.Windows.Forms.Button();
             this.chkLoadOnExpand = new System.Windows.Forms.CheckBox();
+            this.toolStripMenuItem11 = new System.Windows.Forms.ToolStripMenuItem();
             this.grpSource.SuspendLayout();
             this.grpLoadedTotals.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -390,9 +391,10 @@
             this.toolStripMenuItem4,
             this.toolStripMenuItem5,
             this.toolStripMenuItem6,
-            this.toolStripMenuItem10});
+            this.toolStripMenuItem10,
+            this.toolStripMenuItem11});
             this.contextMenuStrip1.Name = "contextMenuTreeFolders";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(279, 158);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(279, 180);
             this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
             // 
             // toolStripMenuItem1
@@ -540,6 +542,13 @@
             this.chkLoadOnExpand.Text = "Load dates taken on expand";
             this.chkLoadOnExpand.UseVisualStyleBackColor = true;
             // 
+            // toolStripMenuItem11
+            // 
+            this.toolStripMenuItem11.Name = "toolStripMenuItem11";
+            this.toolStripMenuItem11.Size = new System.Drawing.Size(278, 22);
+            this.toolStripMenuItem11.Text = "Set Created Date from Last Write Date";
+            this.toolStripMenuItem11.Click += new System.EventHandler(this.menuItems_Click);
+            // 
             // CleanupForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -621,6 +630,7 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem9;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem10;
         private System.Windows.Forms.CheckBox chkLoadOnExpand;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem11;
     }
 }
 

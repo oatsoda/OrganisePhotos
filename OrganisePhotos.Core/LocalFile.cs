@@ -160,6 +160,15 @@ namespace OrganisePhotos.Core
             OnFileUpdated();
         }
 
+        public async Task SetCreatedDateFromLastWrite()
+        {
+            await Task.Run(() =>
+                           {
+                               File.CreationTime = File.LastWriteTime;
+                           }).ConfigureAwait(false);
+            OnFileUpdated();
+        }
+
         public async Task SetFileDatesManually(DateTime value)
         {
             await Task.Run(() =>

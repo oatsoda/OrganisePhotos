@@ -29,6 +29,7 @@ namespace OrganisePhotos.App
         private ToolStripMenuItem MenuSetDatesTakenFromOriginalDateTaken => toolStripMenuItem9;
 
         private ToolStripMenuItem MenuSetFileDatesManually => toolStripMenuItem10;
+        private ToolStripMenuItem MenuSetCreatedDateFromLastWrite => toolStripMenuItem11;
 
         private bool m_TreeViewInOperation;
 
@@ -173,7 +174,7 @@ namespace OrganisePhotos.App
             m_LoadCancelSource.Cancel();
         }
 
-        private void LocalFolderOnLoadProgress(object? sender, LoadProgressEventArgs e)
+        private void LocalFolderOnLoadProgress(object sender, LoadProgressEventArgs e)
         {
             this.InvokeIfRequired(() =>
                                   {
@@ -279,7 +280,7 @@ namespace OrganisePhotos.App
 
         #region Update Tree Methods
 
-        private async Task RunUpdate(Func<TreeNode, Task> action, TreeNode node)
+        private async Task RunUpdate(Func<LocalFile, Task> action, TreeNode node)
         {
             // If already file, just single update, else get child files.  Not recursive, so single level only
             var nodes = node.Tag is LocalFile
@@ -302,12 +303,14 @@ namespace OrganisePhotos.App
 
             try
             {
-                await Task.Run(() =>
-                               {
-                                   nodes.RunInParallel(action, 5);
-                                   //var tasks = nodes.Select(action).ToArray();
-                                   //Task.WaitAll(tasks);
-                               });
+                await nodes.RunInParallel(n =>
+                                          {
+                                              if (!(n.Tag is LocalFile localFile))
+                                                  return Task.CompletedTask;
+
+                                              return action(localFile);
+                                          },
+                                          5);
             }
             catch (Exception ex)
             {
@@ -321,64 +324,10 @@ namespace OrganisePhotos.App
                                   }, true);
         }
 
-        private static async Task LoadFileDateTaken(TreeNode node)
-        {
-            if (!(node.Tag is LocalFile localFile))
-                return;
-
-            await localFile.LoadDateTaken();
-        }
-
-        private static async Task FixFileDateTaken(TreeNode node)
-        {
-            if (!(node.Tag is LocalFile localFile))
-                return;
-
-            await localFile.FixInvalidDateTaken();
-        }
-        
-        private static async Task SetFileDateTaken(TreeNode node, DateTime value)
-        {
-            if (!(node.Tag is LocalFile localFile))
-                return;
-
-            await localFile.SetDateTakenManually(value);
-        }
-
-        private static async Task SyncFileDatesTaken(TreeNode node, LocalFile.SyncDateTaken setFrom)
-        {
-            if (!(node.Tag is LocalFile localFile))
-                return;
-
-            await localFile.SyncDatesTaken(setFrom);
-        }
-        
-        private static async Task SetFileDatesFromDateTaken(TreeNode node)
-        {
-            if (!(node.Tag is LocalFile localFile))
-                return;
-            await localFile.SetFileDatesFromDateTaken();
-        }
-        
-        private static async Task SetDateTakenFromLastWrite(TreeNode node)
-        {
-            if (!(node.Tag is LocalFile localFile))
-                return;
-            await localFile.SetMissingDateTakenFromLastWrite();
-        }
-
-        private static async Task SetFileDates(TreeNode node, DateTime value)
-        {
-            if (!(node.Tag is LocalFile localFile))
-                return;
-
-            await localFile.SetFileDatesManually(value);
-        }
-
         #endregion
-        
+
         #region Tree Context Menu Methods
-        
+
         private void treeFolders_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
             if (m_TreeViewInOperation)
@@ -394,7 +343,7 @@ namespace OrganisePhotos.App
             if (e.Action != TreeViewAction.Expand)
                 return;
 
-            await RunUpdate(LoadFileDateTaken, e.Node);
+            await RunUpdate(f => f.LoadDateTaken(), e.Node);
         }
 
         private async void menuItems_Click(object sender, EventArgs e)
@@ -402,19 +351,19 @@ namespace OrganisePhotos.App
             var node = treeFolders.SelectedNode;
             if (sender == MenuLoadDateTaken)
             {
-                await RunUpdate(LoadFileDateTaken, node);
+                await RunUpdate(f => f.LoadDateTaken(), node);
             }
             else if (sender == MenuFixDateTaken)
             {
-                await RunUpdate(FixFileDateTaken, node);
+                await RunUpdate(f => f.FixInvalidDateTaken(), node);
             }
             else if (sender == MenuSetFileDatesToDateTaken)
             {
-                await RunUpdate(SetFileDatesFromDateTaken, node);
+                await RunUpdate(f => f.SetFileDatesFromDateTaken(), node);
             }
             else if (sender == MenuSetMissingDateTaken)
             {
-                await RunUpdate(SetDateTakenFromLastWrite, node);
+                await RunUpdate(f => f.SetMissingDateTakenFromLastWrite(), node);
             }
             else if (sender == MenuSetDateTakenManually)
             {
@@ -423,19 +372,19 @@ namespace OrganisePhotos.App
                 if (result != DialogResult.OK)
                     return;
 
-                await RunUpdate(n => SetFileDateTaken(n, dateInput.SelectedValue), node);
+                await RunUpdate(f => f.SetDateTakenManually(dateInput.SelectedValue), node);
             }
             else if (sender == MenuSetDatesTakenFromDateTaken)
             {
-                await RunUpdate(n => SyncFileDatesTaken(n, LocalFile.SyncDateTaken.FromDateTaken), node);
+                await RunUpdate(f => f.SyncDatesTaken(LocalFile.SyncDateTaken.FromDateTaken), node);
             }
             else if (sender == MenuSetDatesTakenFromDateDigitized)
             {
-                await RunUpdate(n => SyncFileDatesTaken(n, LocalFile.SyncDateTaken.FromDateDigitized), node);
+                await RunUpdate(f => f.SyncDatesTaken(LocalFile.SyncDateTaken.FromDateDigitized), node);
             }
             else if (sender == MenuSetDatesTakenFromOriginalDateTaken)
             {
-                await RunUpdate(n => SyncFileDatesTaken(n, LocalFile.SyncDateTaken.FromDateOriginallyTaken), node);
+                await RunUpdate(f => f.SyncDatesTaken(LocalFile.SyncDateTaken.FromDateOriginallyTaken), node);
             }
             else if (sender == MenuSetFileDatesManually)
             {
@@ -444,7 +393,11 @@ namespace OrganisePhotos.App
                 if (result != DialogResult.OK)
                     return;
 
-                await RunUpdate(n => SetFileDates(n, dateInput.SelectedValue), node);
+                await RunUpdate(f => f.SetFileDatesManually(dateInput.SelectedValue), node);
+            }
+            else if (sender == MenuSetCreatedDateFromLastWrite)
+            {
+                await RunUpdate(f => f.SetCreatedDateFromLastWrite(), node);
             }
         }
 
