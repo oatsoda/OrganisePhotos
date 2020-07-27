@@ -40,15 +40,9 @@ namespace OrganisePhotos.App
         public CleanupForm()
         {
             m_LoadSettings = new LoadSettings();
-            m_CleanupJobSettings = new CleanupJobSettings
-                                   {
-                                       Prompt = Prompt
-                                   };
+            m_CleanupJobSettings = new CleanupJobSettings();
             InitializeComponent();
-            cboFixDateTaken.BindToEnum<CleanupAction>();
-            cboSetCreatedDateFromDateTaken.BindToEnum<CleanupAction>();
-            cboSetMissingDateTaken.BindToEnum<CleanupAction>();
-            cboRenameDupeFiles.BindToEnum<CleanupAction>();
+            cboAppendDateToShortFileNames.BindToEnum<CleanupAction>();
 
             UpdateLoadSettings();
             UpdateProcessSettings();
@@ -114,7 +108,8 @@ namespace OrganisePhotos.App
                     treeFolders.Enabled = true;
 
                     btnProcess.Enabled = grpAutoCleanupSettings.Enabled = true;
-                    btnCancelProcess.Enabled = grpAutoCleanupProgress.Enabled = false;
+                    btnCancelProcess.Enabled = false;
+                    grpAutoCleanupProgress.Enabled = true;
 
                     break;
 
@@ -125,7 +120,8 @@ namespace OrganisePhotos.App
                     treeFolders.Enabled = true;
 
                     btnProcess.Enabled = grpAutoCleanupSettings.Enabled = false;
-                    btnCancelProcess.Enabled = grpAutoCleanupProgress.Enabled = true;
+                    btnCancelProcess.Enabled = true;
+                    grpAutoCleanupProgress.Enabled = true;
 
                     ClearProcessData();
 
@@ -163,6 +159,21 @@ namespace OrganisePhotos.App
             }
             else
             {
+                var exactDupes = localFolder.GetExactDupes();
+                listLog.Items.Add($"Exact dupes found: {exactDupes.Count}");
+                if (exactDupes.Count > 0)
+                    listLog.Items.AddRange(exactDupes.Select(f => (object)$"{f.File.Name} [{f.File.Length} bytes] {f.File.FullName}").ToArray());
+                
+                var sizeDupes = localFolder.GetSizeDupes();
+                listLog.Items.Add($"Size dupes found: {sizeDupes.Count}");
+                if (sizeDupes.Count > 0)
+                    listLog.Items.AddRange(sizeDupes.Select(f => (object)$"{f.File.Name} [{f.File.Length} bytes] {f.File.FullName}").ToArray());
+
+                var nameDupes = localFolder.GetNameDupes();
+                listLog.Items.Add($"Name dupes found: {nameDupes.Count}");
+                if (nameDupes.Count > 0)
+                    listLog.Items.AddRange(nameDupes.Select(f => (object)$"{f.DisplayName} [{f.File.Length} bytes] {f.File.FullName}").ToArray());
+
                 m_LoadedRootFolder = localFolder;
                 SetState(AppState.Loaded);
             }
@@ -421,35 +432,15 @@ namespace OrganisePhotos.App
 
         #endregion
         
-        private void cboFixDateTaken_SelectedIndexChanged(object sender, EventArgs e) => UpdateProcessSettings();
-        private void cboSetCreatedDateFromDateTaken_SelectedIndexChanged(object sender, EventArgs e) => UpdateProcessSettings();
-        private void cboSetMissingDateTaken_SelectedIndexChanged(object sender, EventArgs e) => UpdateProcessSettings();
-        private void cboRenameDupeFiles_SelectedIndexChanged(object sender, EventArgs e) => UpdateProcessSettings();
-        
+        private void cboAppendDateToShortFileNames_ValueChanged(object sender, EventArgs e) => UpdateProcessSettings();
+        private void chkLogFileDatesOutOfSync_CheckedChanged(object sender, EventArgs e) => UpdateProcessSettings();
+
         private void UpdateProcessSettings()
         {
-            m_CleanupJobSettings.FixIncorrectDateTakenFormat = cboFixDateTaken.SelectedEnum<CleanupAction>();
-            m_CleanupJobSettings.ChangeCreatedDateToDateTaken = cboSetCreatedDateFromDateTaken.SelectedEnum<CleanupAction>();
-            m_CleanupJobSettings.SetDateTakenFromCreatedDateIfNotSet = cboSetMissingDateTaken.SelectedEnum<CleanupAction>();
-            m_CleanupJobSettings.RenameDupeFiles = cboRenameDupeFiles.SelectedEnum<CleanupAction>();
+            m_CleanupJobSettings.AppendDateIfShortFileName = cboAppendDateToShortFileNames.SelectedEnum<CleanupAction>();
+            m_CleanupJobSettings.ReportFileDatesOutOfSync = chkLogFileDatesOutOfSync.Checked;
         }
         
-        private PromptResult Prompt(string question)
-        {
-            DialogResult? result = null;
-            this.InvokeIfRequired(() =>
-                                  {
-                                      result = MessageBox.Show(question, "Continue?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                                  }, true);
-            return result switch
-                   {
-                       DialogResult.Yes => PromptResult.Fix,
-                       DialogResult.No => PromptResult.Skip,
-                       DialogResult.Cancel => PromptResult.Exit,
-                       _ => throw new ArgumentOutOfRangeException()
-                   };
-        }
-
         private async void btnProcess_Click(object sender, EventArgs e)
         {
             SetState(AppState.Processing);
@@ -489,7 +480,6 @@ namespace OrganisePhotos.App
                                       lblFoldersProcessed.Text = e.FoldersProcessed.ToString();
                                   });
         }
-
     }
 
 }

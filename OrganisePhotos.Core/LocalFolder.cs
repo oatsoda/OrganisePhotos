@@ -23,6 +23,8 @@ namespace OrganisePhotos.Core
         public long TotalFileSize { get; private set; }
         public int TotalFolders { get; private set; }
 
+        public List<LocalFile> AllFiles { get; private set; }
+
         public event EventHandler<LoadProgressEventArgs> LoadProgress;
         
         public LocalFolder(LoadSettings settings)
@@ -45,6 +47,7 @@ namespace OrganisePhotos.Core
         public async Task Load(CancellationToken cancellationToken)
         {
             TotalFolders = 1; // This folder
+            AllFiles = new List<LocalFile>();
 
             try
             {
@@ -90,6 +93,9 @@ namespace OrganisePhotos.Core
                                        TotalFiles += folder.TotalFiles;
                                        TotalFileSize += folder.TotalFileSize;
                                        TotalFolders += folder.TotalFolders;
+
+                                       AllFiles.AddRange(folder.Files);
+
                                        OnLoadProgress();
                                    }
 
@@ -109,6 +115,34 @@ namespace OrganisePhotos.Core
         {
             var e = new LoadProgressEventArgs(TotalFiles, TotalFileSize, TotalFolders, m_LoadCompleted);
             LoadProgress?.Invoke(this, e);
+        }
+
+        public List<LocalFile> GetExactDupes()
+        {
+            return AllFiles.Where(f => AllFiles.Any(f2 => f != f2 &&
+                                                          f.File.Name == f2.File.Name &&
+                                                          f.File.Length == f2.File.Length)
+                                 ).ToList();
+        }
+        
+        public List<LocalFile> GetSizeDupes()
+        {
+            return AllFiles.Where(f => AllFiles.Any(f2 => f != f2 &&
+                                                          f.File.Name != f2.File.Name &&
+                                                          f.File.Length == f2.File.Length)
+                                 )
+                           .OrderBy(f => f.File.Length).ThenBy(f => f.File.Name)
+                           .ToList();
+        }
+
+        public List<LocalFile> GetNameDupes()
+        {
+            return AllFiles.Where(f => AllFiles.Any(f2 => f != f2 &&
+                                                          f.File.Name == f2.File.Name &&
+                                                          f.File.Length != f2.File.Length)
+                                 )
+                           .OrderBy(f => f.File.Name).ThenBy(f => f.File.Length)
+                           .ToList();
         }
     }
 }

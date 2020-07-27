@@ -4,7 +4,6 @@
     {
         Ignore = 0,
         Log,
-        Prompt,
         Fix
     }
 }

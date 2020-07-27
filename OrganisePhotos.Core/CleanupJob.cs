@@ -49,10 +49,7 @@ namespace OrganisePhotos.Core
                                OnProgress("Starting processing.");
                                var result = await ProcessDirectory(RootFolder);
 
-                               await ProcessDupes();
-
-                               if (result == false)
-                                   OnProgress("Run cancelled.");
+                               OnProgress(result == false ? "Run cancelled." : "Processing finished.");
 
                            }, m_CancellationToken);
         }
@@ -62,7 +59,7 @@ namespace OrganisePhotos.Core
             if (m_CancellationToken.IsCancellationRequested)
                 return false;
 
-            OnProgress($"Processing folder: {folder.Dir.FullName}");
+            OnProgress();
 
             var x = 0;
             foreach (var file in folder.Files)
@@ -71,7 +68,7 @@ namespace OrganisePhotos.Core
                     return false;
 
                 if (++x % 10 == 0)
-                    OnProgress(null);
+                    OnProgress();
             }
 
             foreach (var subDir in folder.Folders)
@@ -81,7 +78,7 @@ namespace OrganisePhotos.Core
             }
 
             m_FoldersProcessed++;
-            OnProgress(null);
+            OnProgress();
 
             return true;
         }
@@ -91,45 +88,32 @@ namespace OrganisePhotos.Core
             if (m_CancellationToken.IsCancellationRequested)
                 return false;
             
-            var cleanupFile = new CleanupFile(file, m_Settings, OnProgress);
-            var result = await cleanupFile.ProcessFile();
+            if (m_Settings.ReportFileDatesOutOfSync && file.DatesTakenOutOfSync)
+                OnProgress($"File dates: [Create:Write: {file.File.LastWriteTime:dd/MM/yyyy HH:mm:ss} | Create: {file.File.CreationTime:dd/MM/yyyy HH:mm:ss} - {file.File.FullName}");
+
+            if (m_Settings.AppendDateIfShortFileName != CleanupAction.Ignore)
+            {
+                if (file.FileNameDoesNotIncludeDate)
+                {
+                    if (m_Settings.AppendDateIfShortFileName == CleanupAction.Log)
+                    {
+                        OnProgress($"File name no date {file.File.Name} -> {file.FileNameWithDateSuffix} [{file.File.FullName}]");
+                    }
+                    else if (m_Settings.AppendDateIfShortFileName == CleanupAction.Fix)
+                    {
+                        OnProgress($"Renaming {file.File.Name} -> {file.FileNameWithDateSuffix} [{file.File.FullName}]");
+                        await file.AddDateToFileName();
+                    }
+                }
+            }
 
             m_FilesProcessed++;
             m_FilesSizeProcessed += file.File.Length;
 
-            return result;
+            return true;
         }
-
-        private async Task ProcessDupes()
-        {
-            if (m_Settings.RenameDupeFiles == CleanupAction.Ignore)
-                return;
-
-            // TODO: Run Dupe check before Processing all - DupeCleanup mark the LocalFiles and then it can rename as part of the rest of the cleanup
-
-            var dupeCleanup = new DupeCleanup(RootFolder);
-            var isDupes = await dupeCleanup.Check();
-
-            if (!isDupes)
-            {
-                OnProgress("No duplicate files detected");
-                return;
-            }
-
-            OnProgress($"Exact Dupes detected: {dupeCleanup.ExactDupes.Count} [Won't fix] Exact; {dupeCleanup.NameDupes.Count} By Name");
-            
-            foreach (var exactDupe in dupeCleanup.ExactDupes.OrderBy(d => d.File.Name))
-                OnProgress($"[Log] Exact dupe: {exactDupe.File.Name} in {exactDupe.File.Directory.FullName}");
-            
-            foreach (var nameDupe in dupeCleanup.NameDupes.OrderBy(d => d.File.Name))
-            {
-                // BUG: DateTaken might not be loaded
-                if (!await new CleanupFile(nameDupe, m_Settings, OnProgress).FixDuplicateFileName())
-                    return;
-            }
-        }
-
-        private void OnProgress(string message)
+        
+        private void OnProgress(string message = null)
         {
             ProgressUpdate?.Invoke(this, new ProgressUpdateEventArgs(m_FilesProcessed, m_FilesSizeProcessed, m_FoldersProcessed,
                                                                      message));

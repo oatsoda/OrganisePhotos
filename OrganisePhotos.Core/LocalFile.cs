@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -31,6 +32,13 @@ namespace OrganisePhotos.Core
         public bool FileDatesMatch => DatesWithinSeconds(File.CreationTime, File.LastWriteTime, 1);
 
         public string DateTakenCorrectRaw => DateTakenFixable ? DateTaken?.ToString("yyyy:MM:dd HH:mm:ss") : null;
+
+
+        public bool FileNameDoesNotIncludeDate => Path.GetFileNameWithoutExtension(File.Name).Length < 10;
+        
+        public string FileNameWithDateSuffix => FileNameDoesNotIncludeDate
+                                                    ? $"{Path.GetFileNameWithoutExtension(File.Name)}_{File.LastWriteTime:yyyyMMdd_HHmmss}{File.Extension}"
+                                                    : File.Name;
 
         public event EventHandler FileUpdated;
 
@@ -262,6 +270,16 @@ namespace OrganisePhotos.Core
             FromDateTaken,
             FromDateDigitized,
             FromDateOriginallyTaken
+        }
+
+        public async Task AddDateToFileName()
+        {
+            await Task.Run(() =>
+                           {
+                               var newPath = Path.Combine(Path.GetDirectoryName(File.FullName), FileNameWithDateSuffix);
+                               Trace.WriteLine($"Move: {File.FullName} => \r\n\t {newPath}");
+                               File.MoveTo(newPath);
+                           }).ConfigureAwait(false);
         }
     }
 }
